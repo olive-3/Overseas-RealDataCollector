@@ -29,13 +29,70 @@ public class WebSocketService {
         client.addMessageHandler(messageHandler);
 
         // send message
-        client.sendMessage(sendMessage());
+        client.sendMessage(sendMessage1());
+        client.sendMessage(sendMessage2());
+        client.sendMessage(sendMessage3());
+
     }
 
-    public String sendMessage() {
+    public String sendMessage1() {
 
         String approvalKey = getApprovalKey();
         String trKey = "DNASTSLA";   // 테슬라
+
+        String message = "{\n" +
+                "    \"header\":\n" +
+                "    {\n" +
+                "        \"tr_type\":\"1\",\n" +
+                "        \"approval_key\": \"" + approvalKey + "\",\n" +
+                "        \"custtype\":\"P\",\n" +
+                "\n" +
+                "        \"content-type\": \"utf-8\"\n" +
+                "    },\n" +
+                "    \"body\":\n" +
+                "    {\n" +
+                "        \"input\":\n" +
+                "        {\n" +
+                "            \"tr_id\":\"HDFSCNT0\",\n" +
+                "            \"tr_key\":\"" + trKey + "\"\n" +
+                "        }\n" +
+                "    }\n" +
+                "}";
+
+        return message;
+    }
+
+    public String sendMessage2() {
+
+        String approvalKey = getApprovalKey();
+        String trKey = "DNASTQQQ";   // TQQQ
+
+        String message = "{\n" +
+                "    \"header\":\n" +
+                "    {\n" +
+                "        \"tr_type\":\"1\",\n" +
+                "        \"approval_key\": \"" + approvalKey + "\",\n" +
+                "        \"custtype\":\"P\",\n" +
+                "\n" +
+                "        \"content-type\": \"utf-8\"\n" +
+                "    },\n" +
+                "    \"body\":\n" +
+                "    {\n" +
+                "        \"input\":\n" +
+                "        {\n" +
+                "            \"tr_id\":\"HDFSCNT0\",\n" +
+                "            \"tr_key\":\"" + trKey + "\"\n" +
+                "        }\n" +
+                "    }\n" +
+                "}";
+
+        return message;
+    }
+
+    public String sendMessage3() {
+
+        String approvalKey = getApprovalKey();
+        String trKey = "DAMSSPY";   // SPY
 
         String message = "{\n" +
                 "    \"header\":\n" +
