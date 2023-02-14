@@ -1,35 +1,30 @@
 package stock.overseas.websocket;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class MessageHandlerImpl implements MessageHandler {
 
-    private File fileTSLA = new File("");
-    private File fileTQQQ = new File("");
-    private File fileSPY = new File("");
+    private File fileTSLA = new File(".");
+    private File fileTQQQ = new File(".");
+    private File fileSPY = new File(".");
     private long sequenceTSLA = 0L;
     private long sequenceTQQQ = 0L;
     private long sequenceSPY = 0L;
-    private LocalDateTime now;
-    private String date;
 
     public MessageHandlerImpl() {
 
-        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")).substring(2, 8);
-
-        String path1 = fileTSLA.getAbsolutePath() + "/src/main/resources/logs/TSLA/TSLA_" + date + ".txt";
-        String path2 = fileTQQQ.getAbsolutePath() + "/src/main/resources/logs/TQQQ/TQQQ_" + date + ".txt";
-        String path3 = fileSPY.getAbsolutePath() + "/src/main/resources/logs/SPY/SPY_" + date + ".txt";
-        System.out.println("path1 = " + path1);
+        String path1 = getPath("TSLA", fileTSLA);
+        String path2 = getPath("TQQQ", fileTQQQ);
+        String path3 = getPath("SPY", fileSPY);
 
         fileTSLA = new File(path1);
         fileTQQQ = new File(path2);
         fileSPY = new File(path3);
+
+        System.out.println("path1 = " + path1);
+
         if(!fileTSLA.exists()) {
             try {
                 fileTSLA.createNewFile();
@@ -122,6 +117,18 @@ public class MessageHandlerImpl implements MessageHandler {
 
             writerSPY.close();
         }
+    }
 
+    private String getPath(String key, File file) {
+
+        LocalDateTime now;
+        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")).substring(2, 8);
+
+        String absolutePath = file.getAbsolutePath();
+        absolutePath = absolutePath.substring(0, absolutePath.length()-1);
+
+        String path = absolutePath + "logs" + File.separator + key + File.separator + key + "_" + date + ".txt";
+
+        return path;
     }
 }
