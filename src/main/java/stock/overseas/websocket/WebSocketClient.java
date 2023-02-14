@@ -1,23 +1,26 @@
 package stock.overseas.websocket;
 
+import lombok.extern.slf4j.Slf4j;
+
 import javax.websocket.*;
 import java.io.IOException;
 import java.net.URI;
 
+@Slf4j
 @ClientEndpoint
 public class WebSocketClient {
 
-    Session userSession = null;
-    MessageHandler messageHandler;
+    private Session userSession;
+    private MessageHandler messageHandler;
 
     public WebSocketClient() {
+        userSession = null;
     }
 
     public Session connect(URI endpointURI) {
         try {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             userSession = container.connectToServer(this, endpointURI);
-
             return userSession;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -34,14 +37,14 @@ public class WebSocketClient {
 
     @OnOpen
     public void onOpen(Session userSession) {
-        System.out.println("opening websocket");
+        log.info("opening websocket");
         this.userSession = userSession;
     }
 
     @OnClose
     public void onClose(Session userSession, CloseReason reason) {
-        System.out.println("closing websocket");
-        System.out.println("closing reason = " + reason);
+        log.info("closing websocket");
+        log.info("closing reason = {}", reason);
         this.userSession = null;
     }
 

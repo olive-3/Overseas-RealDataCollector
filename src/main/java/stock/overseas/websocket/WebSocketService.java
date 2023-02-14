@@ -10,16 +10,20 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.websocket.Session;
-import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 public class WebSocketService {
 
-    private MessageHandler messageHandler = new MessageHandlerImpl();
-    private WebSocketClient client = new WebSocketClient();
+    private List<String> trKeyList;
+    private MessageHandler messageHandler;
+    private WebSocketClient client;
 
-    public WebSocketService() {
+    public WebSocketService(List<String> trKeyList) {
+        this.trKeyList = trKeyList;
+        this.messageHandler = new MessageHandlerImpl(trKeyList);
+        this.client = new WebSocketClient();
     }
 
     public void getInfo() throws URISyntaxException {
@@ -30,35 +34,9 @@ public class WebSocketService {
         client.addMessageHandler(messageHandler);
 
         // send message
-        client.sendMessage("DNASTSLA");
-        client.sendMessage("DNASTQQQ");
-        client.sendMessage("DAMSSPY");
-    }
-
-    public String sendMessage(String trKey) {
-
-        String approvalKey = getApprovalKey();
-
-        String message = "{\n" +
-                "    \"header\":\n" +
-                "    {\n" +
-                "        \"tr_type\":\"1\",\n" +
-                "        \"approval_key\": \"" + approvalKey + "\",\n" +
-                "        \"custtype\":\"P\",\n" +
-                "\n" +
-                "        \"content-type\": \"utf-8\"\n" +
-                "    },\n" +
-                "    \"body\":\n" +
-                "    {\n" +
-                "        \"input\":\n" +
-                "        {\n" +
-                "            \"tr_id\":\"HDFSCNT0\",\n" +
-                "            \"tr_key\":\"" + trKey + "\"\n" +
-                "        }\n" +
-                "    }\n" +
-                "}";
-
-        return message;
+        for (String trKey : trKeyList) {
+            client.sendMessage(createSendMessage(trKey));
+        }
     }
 
     private String getApprovalKey() {
@@ -83,5 +61,31 @@ public class WebSocketService {
         JSONObject json = response.getBody();
         String approval_key = (String) json.get("approval_key");
         return approval_key;
+    }
+
+    private String createSendMessage(String trKey) {
+
+        String approvalKey = getApprovalKey();
+
+        String message = "{\n" +
+                "    \"header\":\n" +
+                "    {\n" +
+                "        \"tr_type\":\"1\",\n" +
+                "        \"approval_key\": \"" + approvalKey + "\",\n" +
+                "        \"custtype\":\"P\",\n" +
+                "\n" +
+                "        \"content-type\": \"utf-8\"\n" +
+                "    },\n" +
+                "    \"body\":\n" +
+                "    {\n" +
+                "        \"input\":\n" +
+                "        {\n" +
+                "            \"tr_id\":\"HDFSCNT0\",\n" +
+                "            \"tr_key\":\"" + trKey + "\"\n" +
+                "        }\n" +
+                "    }\n" +
+                "}";
+
+        return message;
     }
 }
