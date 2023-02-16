@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.websocket.*;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
 
 @Slf4j
 @ClientEndpoint
@@ -33,6 +34,14 @@ public class WebSocketClient {
 
     public void sendMessage(String message) {
         this.userSession.getAsyncRemote().sendText(message);
+    }
+
+    public void sendMessage() {
+        try {
+            this.userSession.getAsyncRemote().sendPing(ByteBuffer.wrap(new String("ping").getBytes("UTF-8")));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @OnOpen

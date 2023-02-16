@@ -13,6 +13,8 @@ import javax.websocket.Session;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class WebSocketService {
 
@@ -37,6 +39,17 @@ public class WebSocketService {
         for (String trKey : trKeyList) {
             client.sendMessage(createSendMessage(trKey));
         }
+
+        // connection 끊기지 않게
+        Timer timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                client.sendMessage();
+            }
+        };
+        timer.scheduleAtFixedRate(task, 0, 100000);
+
     }
 
     private String getApprovalKey() {
