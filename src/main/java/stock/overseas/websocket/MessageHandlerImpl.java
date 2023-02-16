@@ -83,11 +83,11 @@ public class MessageHandlerImpl implements MessageHandler {
         }
         BufferedWriter writer = new BufferedWriter(fw);
 
-        writer.write(String.valueOf(++sequence));
+        writer.write(String.valueOf(sequence));
         writer.write(",");
         writer.write(getData[5]);   // 현지시간
         writer.write(",");
-        writer.write(getData[11]);  // 현재가
+        writer.write(getData[11].replace(".", ""));  // 현재가
         writer.write(",");
         writer.write(getData[19]);   // 체결량
         writer.write(",");
