@@ -38,16 +38,6 @@ public class WebSocketService {
         for (String trKey : trKeyList) {
             client.sendMessage(createSendMessage(trKey));
         }
-
-        // connection 끊기지 않게
-        Timer timer = new Timer();
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                client.sendMessage();
-            }
-        };
-        timer.scheduleAtFixedRate(task, 0, 100000);
     }
 
     private String getApprovalKey() {
