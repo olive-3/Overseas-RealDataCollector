@@ -11,18 +11,24 @@ import java.nio.ByteBuffer;
 @ClientEndpoint
 public class WebSocketClient {
 
-    private Session userSession;
+    private static final WebSocketClient instance = new WebSocketClient();
+    private Session userSession = null;
     private MessageHandler messageHandler;
 
-    public WebSocketClient() {
-        userSession = null;
+    public static WebSocketClient getInstance() {
+        return instance;
     }
 
-    public Session connect(URI endpointURI) {
+    private WebSocketClient() {}
+
+    public Session getUserSession() {
+        return userSession;
+    }
+
+    public void connect(URI endpointURI) {
         try {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            userSession = container.connectToServer(this, endpointURI);
-            return userSession;
+            container.connectToServer(this, endpointURI);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

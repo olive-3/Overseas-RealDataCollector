@@ -1,23 +1,33 @@
 package stock.overseas;
 
-import org.json.simple.JSONArray;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+import stock.overseas.websocket.WebSocketClient;
 import stock.overseas.websocket.WebSocketService;
 
-import java.io.*;
+import javax.websocket.Session;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
+@EnableScheduling
 @SpringBootApplication
 public class OverseasApplication {
 
 	public static void main(String[] args) throws URISyntaxException, IOException, ParseException {
-		SpringApplication.run(OverseasApplication.class, args);
+		ConfigurableApplicationContext context = SpringApplication.run(OverseasApplication.class, args);
 
 		List<String> trKeyList = getTrKey();
 		WebSocketService service = new WebSocketService(trKeyList);

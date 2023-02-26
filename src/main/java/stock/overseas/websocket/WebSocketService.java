@@ -9,7 +9,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.websocket.Session;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -25,13 +24,13 @@ public class WebSocketService {
     public WebSocketService(List<String> trKeyList) {
         this.trKeyList = trKeyList;
         this.messageHandler = new MessageHandlerImpl(trKeyList);
-        this.client = new WebSocketClient();
+        this.client = WebSocketClient.getInstance();
     }
 
     public void getInfo() throws URISyntaxException {
 
-        // get connection
-        Session session = client.connect(new URI("ws://ops.koreainvestment.com:21000"));
+        // connect
+        client.connect(new URI("ws://ops.koreainvestment.com:21000"));
 
         client.addMessageHandler(messageHandler);
 
@@ -49,7 +48,6 @@ public class WebSocketService {
             }
         };
         timer.scheduleAtFixedRate(task, 0, 100000);
-
     }
 
     private String getApprovalKey() {
