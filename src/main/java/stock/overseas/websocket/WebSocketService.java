@@ -12,8 +12,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class WebSocketService {
 

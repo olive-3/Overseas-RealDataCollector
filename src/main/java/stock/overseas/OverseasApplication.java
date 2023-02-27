@@ -8,17 +8,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
-import stock.overseas.websocket.WebSocketClient;
 import stock.overseas.websocket.WebSocketService;
 
-import javax.websocket.Session;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.URISyntaxException;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j

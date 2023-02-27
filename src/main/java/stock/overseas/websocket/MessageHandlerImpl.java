@@ -1,45 +1,24 @@
 package stock.overseas.websocket;
 
 import lombok.extern.slf4j.Slf4j;
+import stock.overseas.directory.DirectoryService;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class MessageHandlerImpl implements MessageHandler {
 
-    private Map<String, StockFile> stockFiles = new ConcurrentHashMap<>();
+    private Map<String, StockFile> stockFiles;
+    private DirectoryService directoryService;
 
     public MessageHandlerImpl(List<String> trKeyList) {
-
-        for (String trKey : trKeyList) {
-
-            String stockName = trKey.substring(4);
-
-            File file = new File(".");
-            String path = getPath(stockName, file);
-            file = new File(path);
-
-            if(!file.exists()) {
-                try {
-                    file.createNewFile();
-                    log.info("{} file created", stockName);
-                } catch (IOException e) {
-                    log.info(e.getMessage());
-                    throw new RuntimeException(e);
-                }
-            }
-
-            StockFile stockFile = new StockFile(stockName, file, 0L);
-            stockFiles.put(trKey, stockFile);
-        }
+        directoryService = new DirectoryService();
+        directoryService.checkDirectoryExist(trKeyList);
+        stockFiles = directoryService.makeFiles(trKeyList);
     }
 
     @Override
@@ -55,18 +34,6 @@ public class MessageHandlerImpl implements MessageHandler {
         write(trKey, getData);
     }
 
-    private String getPath(String key, File file) {
-
-        LocalDateTime now;
-        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")).substring(2, 8);
-
-        String absolutePath = file.getAbsolutePath();
-        absolutePath = absolutePath.substring(0, absolutePath.length()-1);
-
-        String path = absolutePath + "logs" + File.separator + key + File.separator + key + "_" + date + ".txt";
-
-        return path;
-    }
 
     private void write(String trKey, String[] getData) throws IOException {
 
