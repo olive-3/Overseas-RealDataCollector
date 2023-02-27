@@ -34,7 +34,7 @@ public class ScheduledService {
         }
     }
 
-    @Scheduled(cron = "0 0 10 * * *")
+    @Scheduled(cron = "0 1 10 * * *")
     public void close() {
         Session session = client.getUserSession();
         try {

@@ -1,6 +1,8 @@
 package stock.overseas.websocket;
 
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -9,8 +11,10 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class WebSocketService {
@@ -25,7 +29,7 @@ public class WebSocketService {
         this.client = WebSocketClient.getInstance();
     }
 
-    public void getInfo() throws URISyntaxException {
+    public void getInfo() throws URISyntaxException, IOException, ParseException {
 
         // connect
         client.connect(new URI("ws://ops.koreainvestment.com:21000"));
@@ -38,17 +42,25 @@ public class WebSocketService {
         }
     }
 
-    private String getApprovalKey() {
+    private String getApprovalKey() throws IOException, ParseException {
 
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
+
+        String absolutePath = Paths.get("").toAbsolutePath().toString();
+        String path = absolutePath + File.separator + "RealDataCollector.json";
+        Reader reader = new FileReader(path);
+        JSONParser parser = new JSONParser();
+        JSONObject jsonObject = (JSONObject)parser.parse(reader);
+        JSONObject authentication = (JSONObject)jsonObject.get("Authentication");
+
         JSONObject body = new JSONObject();
-        body.put("grant_type", "client_credentials");
-        body.put("appkey", "PSwyURkfTGAFKqByG3jvatxtb5vbFJZhsM0Q");
-        body.put("secretkey", "RQvCEwJnKvqPoEPyXHz0PKND1dR5feueXjymZ/Go7kOT2lt3tzqiIo10UFdfCWwt3xcOqhKkHb4S7Stg8fzgRNNu2BFqZWYwsJs8XtMUiyLp2vEKlYe2i9sfSAGIn4d4TTaeb/ocY6dDVBfp4HpheMx+T6JpAkhMKdhguOJREYyZbMTO6c0=");
+        body.put("grant_type", authentication.get("grant_type").toString());
+        body.put("appkey", authentication.get("appkey").toString());
+        body.put("secretkey", authentication.get("secretkey").toString());
 
         HttpEntity<JSONObject> entity = new HttpEntity<>(body, headers);
 
@@ -62,7 +74,7 @@ public class WebSocketService {
         return approval_key;
     }
 
-    private String createSendMessage(String trKey) {
+    private String createSendMessage(String trKey) throws IOException, ParseException {
 
         String approvalKey = getApprovalKey();
 

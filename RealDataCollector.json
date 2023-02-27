@@ -1,0 +1,50 @@
+{
+  "Authentication": {
+    "grant_type": "client_credentials",
+    "appkey": "PSwyURkfTGAFKqByG3jvatxtb5vbFJZhsM0Q",
+    "secretkey": "RQvCEwJnKvqPoEPyXHz0PKND1dR5feueXjymZ/Go7kOT2lt3tzqiIo10UFdfCWwt3xcOqhKkHb4S7Stg8fzgRNNu2BFqZWYwsJs8XtMUiyLp2vEKlYe2i9sfSAGIn4d4TTaeb/ocY6dDVBfp4HpheMx+T6JpAkhMKdhguOJREYyZbMTO6c0="
+  },
+  "Stocks": {
+    "AMEX": [
+      {
+        "Symbol": "SPY",
+        "Name": "SPDR S&P 500 ETF"
+      },
+      {
+        "Symbol": "SOXL",
+        "Name": "Direcxion Daily Semiconductor Bull 3X Shares"
+      },
+      {
+        "Symbol": "TMF",
+        "Name": "Direcxion Daily 20+ Year Treasury Bull 3X Shares"
+      },
+      {
+        "Symbol": "UPRO",
+        "Name": "ProShares UltraPro S&P500"
+      }
+    ],
+    "NASDAQ": [
+      {
+        "Symbol": "TSLA",
+        "Name": "Tesla"
+      },
+      {
+        "Symbol": "TQQQ",
+        "Name": "ProShares UltraPro QQQ"
+      },
+      {
+        "Symbol": "QQQ",
+        "Name": "Invesco QQQ Trust"
+      }
+    ],
+    "NYSE": [
+      {
+        "Symbol": "XOM",
+        "Name": "Exxon Mobil"
+      }
+    ]
+  },
+  "Settings": {
+    "AutoClosingTime": "100100"     
+  }
+}
