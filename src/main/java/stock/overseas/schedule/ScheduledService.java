@@ -15,19 +15,8 @@ public class ScheduledService {
 
     private WebSocketClient client = WebSocketClient.getInstance();
 
-    // 장전 18:00 ~ 23:59
-    @Scheduled(cron = "0 0/1 18-23 * * *")
-    public void maintainConnetionBeforeMarket() {
-        log.info("call");
-        Session session = client.getUserSession();
-        if(session != null) {
-            client.sendMessage();
-        }
-    }
-
-    // 장후 6:00 ~ 9:59
-    @Scheduled(cron = "0 0/1 6-9 * * *")
-    public void maintainConnetionAfterMarket() {
+    @Scheduled(cron = "0 0/1 * * * *")
+    public void maintainConnetion() {
         Session session = client.getUserSession();
         if(session != null) {
             client.sendMessage();
