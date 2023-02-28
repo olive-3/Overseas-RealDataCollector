@@ -59,7 +59,7 @@ public class WebSocketClient {
     @OnClose
     public void onClose(Session userSession, CloseReason reason) {
         log.info("closing websocket");
-        log.info("closing reason = {}", reason);
+//        log.info("closing reason = {}", reason);
         this.userSession = null;
     }
 
