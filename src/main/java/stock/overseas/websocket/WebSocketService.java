@@ -40,15 +40,14 @@ public class WebSocketService {
 
         client.addMessageHandler(messageHandler);
 
+        String approvalKey = getApprovalKey();
         // send message
         for (String trKey : trKeyList) {
-            client.sendMessage(createSendMessage(trKey));
+            client.sendMessage(createSendMessage(approvalKey, trKey));
         }
     }
 
-    private String createSendMessage(String trKey) throws IOException, ParseException {
-
-        String approvalKey = getApprovalKey();
+    private String createSendMessage(String approvalKey, String trKey) {
 
         String message = "{\n" +
                 "    \"header\":\n" +
@@ -124,9 +123,13 @@ public class WebSocketService {
         JSONParser parser = new JSONParser();
         JSONObject jsonObject = (JSONObject)parser.parse(reader);
         JSONObject authentication = (JSONObject)jsonObject.get("Authentication");
-        String appKey = authentication.get("appKey").toString();
-        String secretKey = authentication.get("secretKey").toString();
+        String grantType = authentication.get("GrantType").toString();
+        String appKey = authentication.get("AppKey").toString();
+        String secretKey = authentication.get("SecretKey").toString();
 
+        if(grantType.isEmpty()) {
+            throw new MyAuthenticationException("인증 관련 GrantType 값이 존재 하지 않아 인증을 진행 할 수 없습니다. 해당 값을 설정 후 다시 실행해 주시기 바랍니다.");
+        }
         if(appKey.isEmpty()) {
             throw new MyAuthenticationException("인증 관련 AppKey 값이 존재 하지 않아 인증을 진행 할 수 없습니다. 해당 값을 설정 후 다시 실행해 주시기 바랍니다.");
         }
@@ -136,7 +139,7 @@ public class WebSocketService {
 
         JSONObject body = new JSONObject();
 
-        body.put("grant_type", authentication.get("grantType").toString());
+        body.put("grant_type", grantType);
         body.put("appkey", appKey);
         body.put("secretkey", secretKey);
         return body;
