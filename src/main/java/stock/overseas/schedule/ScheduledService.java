@@ -15,7 +15,7 @@ public class ScheduledService {
 
     private WebSocketClient client = WebSocketClient.getInstance();
 
-    @Scheduled(cron = "0 0/1 * * * *")
+    @Scheduled(cron = "${sendPingTime.cron}")
     public void maintainConnetion() {
         Session session = client.getUserSession();
         if(session != null) {
@@ -23,7 +23,7 @@ public class ScheduledService {
         }
     }
 
-    @Scheduled(cron = "0 1 10 * * *")
+    @Scheduled(cron = "${closingTime.cron}")
     public void close() {
         Session session = client.getUserSession();
         try {
