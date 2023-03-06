@@ -5,15 +5,17 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import stock.overseas.gui.MyFrame;
 import stock.overseas.websocket.WebSocketService;
 
 import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,21 +26,23 @@ import java.util.Map;
 @SpringBootApplication
 public class OverseasApplication {
 
-	public static void main(String[] args) throws URISyntaxException, IOException, ParseException {
-		ConfigurableApplicationContext context = SpringApplication.run(OverseasApplication.class, args);
+	public static void main(String[] args) throws URISyntaxException, IOException, ParseException, InterruptedException {
+
+		SpringApplicationBuilder builder = new SpringApplicationBuilder(OverseasApplication.class);
+		builder.headless(false);
+		ConfigurableApplicationContext context = builder.run(args);
 
 		List<String> trKeyList = getTrKey();
 		WebSocketService service = new WebSocketService(trKeyList);
 		service.getInfo();
 	}
 
-	private static List<String> getTrKey() throws IOException, ParseException {
+	private static List<String> getTrKey() throws IOException, ParseException, InterruptedException {
 
 		List<String> trKeyList = new ArrayList<>();
 		Map<String, String> marketMap = new HashMap<>();
-		marketMap.put("AMEX", "AMS");
-		marketMap.put("NASDAQ", "NAS");
-		marketMap.put("NYSE", "NYS");
+		MyFrame myFrame = MyFrame.getInstance();
+
 
 		String absolutePath = Paths.get("").toAbsolutePath().toString();
 		String path = absolutePath + File.separator + "RealDataCollector.json";
@@ -47,8 +51,9 @@ public class OverseasApplication {
 		try {
 			reader = new FileReader(path);
 		} catch (FileNotFoundException e) {
-			log.info("설정 파일 RealDataCollector.json 파일이 존재하지 않아 프로그램을 종료합니다.");
-			System.exit(1);
+			myFrame.actionPerformed(LocalDateTime.now(), "설정 파일 RealDataCollector.json 파일이 존재하지 않습니다.");
+//			Thread.interrupted();
+//			System.exit(1);
 		}
 
 		JSONParser parser = new JSONParser();

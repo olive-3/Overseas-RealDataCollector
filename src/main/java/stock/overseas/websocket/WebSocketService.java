@@ -13,11 +13,13 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import stock.overseas.MyAuthenticationException;
+import stock.overseas.gui.MyFrame;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -26,11 +28,13 @@ public class WebSocketService {
     private List<String> trKeyList;
     private MessageHandler messageHandler;
     private WebSocketClient client;
+    private MyFrame myFrame;
 
     public WebSocketService(List<String> trKeyList) {
         this.trKeyList = trKeyList;
         this.messageHandler = new MessageHandlerImpl(trKeyList);
         this.client = WebSocketClient.getInstance();
+        this.myFrame = MyFrame.getInstance();
     }
 
     public void getInfo() throws URISyntaxException, IOException, ParseException {
@@ -97,9 +101,11 @@ public class WebSocketService {
             response = restTemplate.postForEntity(uri.toString(), entity, JSONObject.class);
             JSONObject json = response.getBody();
             String approval_key = (String) json.get("approval_key");
+            myFrame.actionPerformed(LocalDateTime.now(), "로그온 성공");
             return approval_key;
         } catch(HttpClientErrorException e) {
-            log.info("인증 실패");
+//            log.info("인증 실패");
+            myFrame.actionPerformed(LocalDateTime.now(), "인증 실패");
             client.getUserSession().close();
             System.exit(1);
         }
