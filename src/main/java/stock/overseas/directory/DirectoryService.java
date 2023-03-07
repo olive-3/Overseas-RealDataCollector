@@ -1,23 +1,77 @@
 package stock.overseas.directory;
 
-import lombok.extern.slf4j.Slf4j;
-import stock.overseas.websocket.StockFile;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import stock.overseas.gui.MyGUI;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
+import java.io.*;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 
-@Slf4j
 public class DirectoryService {
 
-    private Path path = Paths.get("");
-    private String absolutePath = path.toAbsolutePath().toString();
+    private String programPath = Paths.get("").toAbsolutePath().toString();
+    private String jsonPath = programPath + File.separator + "RealDataCollector.json";
+    private String realDataPath = programPath + File.separator + "RealData";
+    private MyGUI myGUI = MyGUI.getInstance();
+
+    public void checkJsonFileExist() throws FileNotFoundException {
+
+        File jsonFile = new File(jsonPath);
+        if (!jsonFile.exists()) {
+            throw new FileNotFoundException();
+        }
+    }
+
+    public void checkJsonFileForm() throws IOException, ParseException {
+
+        Reader reader = new FileReader(jsonPath);
+
+        JSONParser parser = new JSONParser();
+        JSONObject jsonObject = (JSONObject) parser.parse(reader);   // throw IOException, ParseException
+        JSONObject authentication = (JSONObject) jsonObject.get("Authentication");
+
+        List<String> jsonAuthKeyList = Arrays.asList("GrantType", "AppKey", "SecretKey");
+        for (String authKey : jsonAuthKeyList) {
+            String authValue = authentication.get(authKey).toString();
+            if (authValue.isEmpty()) {
+                String errorMessage = "인증 관련 " + authKey + " 값이 존재 하지 않아 인증을 진행 할 수 없습니다. 해당 값을 설정 후 다시 실행해 주시기 바랍니다.";
+                myGUI.exceptionHandling(LocalDateTime.now(), errorMessage);
+            }
+        }
+    }
+
+    public List<String> getTrKeyList() throws IOException, ParseException {
+
+        List<String> trKeyList = new ArrayList<>();
+        Map<String, String> marketMap = new HashMap<>();
+        marketMap.put("NASDAQ", "NAS");
+        marketMap.put("AMEX", "AMS");
+        marketMap.put("NYSE", "NYS");
+
+        Reader reader = new FileReader(jsonPath);
+
+        JSONParser parser = new JSONParser();
+        JSONObject jsonObject = (JSONObject) parser.parse(reader);
+        JSONObject stocks = (JSONObject) jsonObject.get("Stocks");
+
+        for (String key : marketMap.keySet()) {
+            Object market = stocks.get(key);
+            if (market != null) {
+                JSONArray marketArray = (JSONArray) stocks.get(key);
+                for (Object arr : marketArray) {
+                    Object symbol = ((JSONObject) arr).get("Symbol");
+                    trKeyList.add("D" + marketMap.get(key) + symbol.toString());
+                }
+            }
+        }
+
+        return trKeyList;
+    }
 
     public void checkDirectoryExist(List<String> trKeyList) {
 
@@ -29,16 +83,10 @@ public class DirectoryService {
 
     private void makeRealDataDirectory() {
 
-        String pathRealData = absolutePath + File.separator + "RealData";
-        File folder = new File(pathRealData);
+        File folder = new File(realDataPath);
 
-        if(!folder.exists()) {
-            try {
-                folder.mkdir();
-            }
-            catch (Exception e) {
-                e.getStackTrace();
-            }
+        if (!folder.exists()) {
+            folder.mkdir();
         }
     }
 
@@ -46,53 +94,35 @@ public class DirectoryService {
 
         int year = LocalDateTime.now().getYear();
         String stockName = trKey.substring(4);
-        String pathTickerYear = absolutePath + File.separator + "RealData" + File.separator + stockName + File.separator + year;
+        String pathTickerYear = realDataPath + File.separator + stockName + File.separator + year;
         File folder = new File(pathTickerYear);
 
-        if(!folder.exists()) {
-            try {
-                folder.mkdirs();
-            }
-            catch (Exception e) {
-                e.getStackTrace();
-            }
+        if (!folder.exists()) {
+            folder.mkdirs();
         }
     }
 
-    public Map makeFiles(List<String> trKeyList) {
-
-        Map<String, StockFile> stockFiles = new ConcurrentHashMap<>();
+    public void makeFiles(List<String> trKeyList) {
 
         for (String trKey : trKeyList) {
-
             String stockName = trKey.substring(4);
-
             String path = getPath(stockName);
             File file = new File(path);
 
-            if(!file.exists()) {
+            if (!file.exists()) {
                 try {
                     file.createNewFile();
                 } catch (IOException e) {
-                    log.info(e.getMessage());
-                    throw new RuntimeException(e);
+                    myGUI.exceptionHandling(LocalDateTime.now(), "파일 생성 중 오류 발생");
                 }
             }
-
-            StockFile stockFile = new StockFile(stockName, file, 0L);
-            stockFiles.put(trKey, stockFile);
         }
-
-        return stockFiles;
     }
-
     private String getPath(String key) {
 
-        LocalDateTime now;
         String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")).substring(2, 8);
         int year = LocalDateTime.now().getYear();
-
-        String filePath = absolutePath + File.separator + "RealData" + File.separator + key + File.separator + year + File.separator + key + "_" + date + ".txt";
+        String filePath = realDataPath + File.separator + key + File.separator + year + File.separator + key + "_" + date + ".txt";
 
         return filePath;
     }

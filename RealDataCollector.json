@@ -1,8 +1,8 @@
 {
   "Authentication": {
-    "grantType": "client_credentials",
-    "appKey": "PSwyURkfTGAFKqByG3jvatxtb5vbFJZhsM0Q",
-    "secretKey": "RQvCEwJnKvqPoEPyXHz0PKND1dR5feueXjymZ/Go7kOT2lt3tzqiIo10UFdfCWwt3xcOqhKkHb4S7Stg8fzgRNNu2BFqZWYwsJs8XtMUiyLp2vEKlYe2i9sfSAGIn4d4TTaeb/ocY6dDVBfp4HpheMx+T6JpAkhMKdhguOJREYyZbMTO6c0="
+    "GrantType": "client_credentials",
+    "AppKey": "PSwyURkfTGAFKqByG3jvatxtb5vbFJZhsM0Q",
+    "SecretKey": "RQvCEwJnKvqPoEPyXHz0PKND1dR5feueXjymZ/Go7kOT2lt3tzqiIo10UFdfCWwt3xcOqhKkHb4S7Stg8fzgRNNu2BFqZWYwsJs8XtMUiyLp2vEKlYe2i9sfSAGIn4d4TTaeb/ocY6dDVBfp4HpheMx+T6JpAkhMKdhguOJREYyZbMTO6c0="
   },
   "Stocks": {
     "AMEX": [
