@@ -1,6 +1,9 @@
 package stock.overseas;
 
 import org.json.simple.parser.ParseException;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import stock.overseas.directory.DirectoryService;
 import stock.overseas.gui.MyGUI;
 import stock.overseas.http.HttpService;
@@ -17,9 +20,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@EnableScheduling
+@SpringBootApplication
 public class MainApp {
 
     public static void main(String[] args) {
+
+		SpringApplicationBuilder builder = new SpringApplicationBuilder(MainApp.class);
+		builder.headless(false);
+		builder.run(args);
 
         String approvalKey = null;
         Map<String, StockFile> stockFiles = new ConcurrentHashMap<>();
@@ -56,8 +65,6 @@ public class MainApp {
             myGUI.actionPerformed(LocalDateTime.now(), "Websocket 연결 => 실패");
         }
 
-
         webSocketService.sendMessage(approvalKey, trKeyList);
-
     }
 }

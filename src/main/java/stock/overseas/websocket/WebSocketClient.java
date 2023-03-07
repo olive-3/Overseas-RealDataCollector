@@ -53,8 +53,9 @@ public class WebSocketClient {
     }
 
     @OnClose
-    public void onClose(CloseReason reason) {
+    public void onClose() {
         this.userSession = null;
+        myGUI.actionPerformed(LocalDateTime.now(), "소켓 닫힘 => 성공");
     }
 
     @OnMessage

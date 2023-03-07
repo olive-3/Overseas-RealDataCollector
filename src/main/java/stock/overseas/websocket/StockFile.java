@@ -1,11 +1,7 @@
 package stock.overseas.websocket;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.io.File;
 
-@Getter @Setter
 public class StockFile {
 
     private String stockName;
@@ -15,6 +11,22 @@ public class StockFile {
     public StockFile(String stockName, File file, long sequence) {
         this.stockName = stockName;
         this.file = file;
+        this.sequence = sequence;
+    }
+
+    public String getStockName() {
+        return stockName;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public long getSequence() {
+        return sequence;
+    }
+
+    public void setSequence(long sequence) {
         this.sequence = sequence;
     }
 }
