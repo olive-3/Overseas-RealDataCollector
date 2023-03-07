@@ -1,6 +1,5 @@
 package stock.overseas.websocket;
 
-import lombok.extern.slf4j.Slf4j;
 import stock.overseas.directory.DirectoryService;
 
 import java.io.BufferedWriter;
@@ -9,7 +8,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
 public class MessageHandlerImpl implements MessageHandler {
 
     private Map<String, StockFile> stockFiles;
@@ -17,8 +15,7 @@ public class MessageHandlerImpl implements MessageHandler {
 
     public MessageHandlerImpl(List<String> trKeyList) {
         directoryService = new DirectoryService();
-        directoryService.checkDirectoryExist(trKeyList);
-        stockFiles = directoryService.makeFiles(trKeyList);
+        stockFiles = directoryService.getStockFileMap(trKeyList);
     }
 
     @Override
@@ -41,13 +38,7 @@ public class MessageHandlerImpl implements MessageHandler {
         long sequence = stockFile.getSequence();
         stockFile.setSequence(++sequence);
 
-        FileWriter fw = null;
-        try {
-            fw = new FileWriter(stockFile.getFile(), true);
-        } catch (IOException e) {
-            log.info(e.getMessage());
-            throw new RuntimeException(e);
-        }
+        FileWriter fw = new FileWriter(stockFile.getFile(), true);
         BufferedWriter writer = new BufferedWriter(fw);
 
         writer.write(String.valueOf(sequence));

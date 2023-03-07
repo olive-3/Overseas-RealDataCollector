@@ -47,10 +47,4 @@ public class MyGUI extends JFrame {
         textArea.setCaretPosition(textArea.getDocument().getLength());
     }
 
-//    public void exceptionHandling(Thread thread, LocalDateTime datetime, String content) {
-//        textArea.append("[" + datetime.toString() + "] " + content + newline);
-//        textArea.setCaretPosition(textArea.getDocument().getLength());
-//        thread.interrupt();
-//    }
-
 }

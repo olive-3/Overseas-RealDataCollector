@@ -5,12 +5,14 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import stock.overseas.gui.MyGUI;
+import stock.overseas.websocket.StockFile;
 
 import java.io.*;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DirectoryService {
 
@@ -73,6 +75,31 @@ public class DirectoryService {
         return trKeyList;
     }
 
+    public Map<String, StockFile> getStockFileMap(List<String> trKeyList) {
+
+        Map<String, StockFile> stockFiles = new ConcurrentHashMap<>();
+
+        for (String trKey : trKeyList) {
+
+            String stockName = trKey.substring(4);
+            String path = getPath(stockName);
+            File file = new File(path);
+
+            if(!file.exists()) {
+                try {
+                    file.createNewFile();
+                } catch (IOException e) {
+                    myGUI.actionPerformed(LocalDateTime.now(), "txt 파일 생성 중 오류 발생");
+                }
+            }
+
+            StockFile stockFile = new StockFile(stockName, file, 0L);
+            stockFiles.put(trKey, stockFile);
+        }
+
+        return stockFiles;
+    }
+
     public void checkDirectoryExist(List<String> trKeyList) {
 
         makeRealDataDirectory();
@@ -118,6 +145,7 @@ public class DirectoryService {
             }
         }
     }
+
     private String getPath(String key) {
 
         String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")).substring(2, 8);
