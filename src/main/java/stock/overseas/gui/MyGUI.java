@@ -42,9 +42,15 @@ public class MyGUI extends JFrame {
         });
     }
 
-    public void exceptionHandling(LocalDateTime datetime, String content) {
+    public void actionPerformed(LocalDateTime datetime, String content) {
         textArea.append("[" + datetime.toString() + "] " + content + newline);
         textArea.setCaretPosition(textArea.getDocument().getLength());
     }
+
+//    public void exceptionHandling(Thread thread, LocalDateTime datetime, String content) {
+//        textArea.append("[" + datetime.toString() + "] " + content + newline);
+//        textArea.setCaretPosition(textArea.getDocument().getLength());
+//        thread.interrupt();
+//    }
 
 }

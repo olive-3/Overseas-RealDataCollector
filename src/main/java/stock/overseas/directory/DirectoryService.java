@@ -40,7 +40,7 @@ public class DirectoryService {
             String authValue = authentication.get(authKey).toString();
             if (authValue.isEmpty()) {
                 String errorMessage = "인증 관련 " + authKey + " 값이 존재 하지 않아 인증을 진행 할 수 없습니다. 해당 값을 설정 후 다시 실행해 주시기 바랍니다.";
-                myGUI.exceptionHandling(LocalDateTime.now(), errorMessage);
+                myGUI.actionPerformed(LocalDateTime.now(), errorMessage);
             }
         }
     }
@@ -113,7 +113,7 @@ public class DirectoryService {
                 try {
                     file.createNewFile();
                 } catch (IOException e) {
-                    myGUI.exceptionHandling(LocalDateTime.now(), "파일 생성 중 오류 발생");
+                    myGUI.actionPerformed(LocalDateTime.now(), "파일 생성 중 오류 발생");
                 }
             }
         }
