@@ -21,16 +21,16 @@ public class MyGUI extends JFrame {
 
     private MyGUI() {
         JLabel description = new JLabel("실시간 데이터 수집 정보를 출력합니다.");
-        description.setBounds(50,35,350,30);
-        closeButton.setBounds(860, 35, 100, 30);
+        description.setBounds(50,20,350,30);
+        closeButton.setBounds(655, 20, 100, 30);
 
-        textArea.setBounds(50, 70, 900, 350);
+        textArea.setBounds(50, 50, 700, 400);
         textArea.setBorder(border);
         textArea.setEditable(false);
 
         add(description); add(closeButton); add(textArea);
         setTitle("RealDataCollector");
-        setSize(1000,500);
+        setSize(800,500);
         setLayout(null);
         setVisible(true);
 

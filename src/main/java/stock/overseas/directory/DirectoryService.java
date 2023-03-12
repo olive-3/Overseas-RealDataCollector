@@ -47,9 +47,8 @@ public class DirectoryService {
         }
     }
 
-    public List<String> getTrKeyList() throws IOException, ParseException {
+    public void initStock(List<Stock> stockListInfo) throws IOException, ParseException {
 
-        List<String> trKeyList = new ArrayList<>();
         Map<String, String> marketMap = new HashMap<>();
         marketMap.put("NASDAQ", "NAS");
         marketMap.put("AMEX", "AMS");
@@ -66,13 +65,15 @@ public class DirectoryService {
             if (market != null) {
                 JSONArray marketArray = (JSONArray) stocks.get(key);
                 for (Object arr : marketArray) {
-                    Object symbol = ((JSONObject) arr).get("Symbol");
-                    trKeyList.add("D" + marketMap.get(key) + symbol.toString());
+                    String symbol = ((JSONObject) arr).get("Symbol").toString();
+                    String stockName = ((JSONObject) arr).get("Name").toString();
+                    String trKey = "D" + marketMap.get(key) + symbol;
+
+                    Stock stock = new Stock(symbol, stockName, trKey);
+                    stockListInfo.add(stock);
                 }
             }
         }
-
-        return trKeyList;
     }
 
     public Map<String, StockFile> getStockFileMap(List<String> trKeyList) {

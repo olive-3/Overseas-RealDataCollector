@@ -1,5 +1,6 @@
 package stock.overseas.websocket;
 
+import stock.overseas.directory.Stock;
 import stock.overseas.gui.MyGUI;
 
 import javax.websocket.DeploymentException;
@@ -7,6 +8,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class WebSocketService  {
@@ -31,16 +33,17 @@ public class WebSocketService  {
         }
     }
 
-    public void sendMessage(String approvalKey, List<String> trKeyList) {
+    public void sendMessage(String approvalKey, List<Stock> stockInfoList) {
 
         client.addMessageHandler(messageHandler);
 
-        for (String trKey : trKeyList) {
-            client.sendMessage(createSendMessage(approvalKey, trKey));
-            myGUI.actionPerformed(LocalDateTime.now(), trKey.substring(4) + " => 성공");
+        for (Stock stock : stockInfoList) {
+            client.sendMessage(createSendMessage(approvalKey, stock.getTrKey()));
+            String message = "[" + stock.getSymbol() + "] " + stock.getStockName() + " => 성공";
+            myGUI.actionPerformed(LocalDateTime.now(), message);
         }
 
-        myGUI.actionPerformed(LocalDateTime.now(), "총 " + trKeyList.size() + " 종목 실시간 체결 데이터 등록 완료");
+        myGUI.actionPerformed(LocalDateTime.now(), "총 " + stockInfoList.size() + " 종목 실시간 체결 데이터 등록 완료");
     }
 
     private String createSendMessage(String approvalKey, String trKey) {
