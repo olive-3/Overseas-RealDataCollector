@@ -15,6 +15,10 @@
         "Name": "Direcxion Daily Semiconductor Bull 3X Shares"
       },
       {
+        "Symbol": "SOXS",
+        "Name": "Direcxion Daily Semiconductor Bear 3X Shares"
+      },
+      {
         "Symbol": "TMF",
         "Name": "Direcxion Daily 20+ Year Treasury Bull 3X Shares"
       },
@@ -27,6 +31,10 @@
       {
         "Symbol": "TSLA",
         "Name": "Tesla"
+      },
+      {
+        "Symbol": "SQQQ",
+        "Name": "ProShares UltraPro Short QQQ"
       },
       {
         "Symbol": "TQQQ",

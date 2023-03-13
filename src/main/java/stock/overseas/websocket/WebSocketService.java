@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 public class WebSocketService  {
