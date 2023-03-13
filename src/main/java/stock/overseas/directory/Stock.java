@@ -15,4 +15,12 @@ public class Stock {
         this.stockName = stockName;
         this.trKey = trKey;
     }
+
+    public String getTrKey() {
+        return trKey;
+    }
+
+    public void setTrKey(String trKey) {
+        this.trKey = trKey;
+    }
 }
