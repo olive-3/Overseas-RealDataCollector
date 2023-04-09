@@ -38,20 +38,26 @@ public class MessageHandlerImpl implements MessageHandler {
         long sequence = stockFile.getSequence();
         stockFile.setSequence(++sequence);
 
-        FileWriter fw = new FileWriter(stockFile.getFile(), true);
-        BufferedWriter writer = new BufferedWriter(fw);
+        FileWriter fw = null;
+        BufferedWriter writer = null;
+        try {
+            fw = new FileWriter(stockFile.getFile(), true);
+            writer = new BufferedWriter(fw);
 
-        writer.write(String.valueOf(sequence));
-        writer.write(",");
-        writer.write(getData[5]);   // 현지시간
-        writer.write(",");
-        writer.write(getData[11].replace(".", ""));  // 현재가
-        writer.write(",");
-        writer.write(getData[19]);   // 체결량
-        writer.write(",");
-        writer.write(getData[25]);  // 시장구분
-        writer.newLine();
-
-        writer.close();
+            writer.write(String.valueOf(sequence));
+            writer.write(",");
+            writer.write(getData[5]);   // 현지시간
+            writer.write(",");
+            writer.write(getData[11].replace(".", ""));  // 현재가
+            writer.write(",");
+            writer.write(getData[19]);   // 체결량
+            writer.write(",");
+            writer.write(getData[25]);  // 시장구분
+            writer.newLine();
+        } catch (IOException e) {
+            throw new IOException(e);
+        } finally {
+            writer.close();
+        }
     }
 }
