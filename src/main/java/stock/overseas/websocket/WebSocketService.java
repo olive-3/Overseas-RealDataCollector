@@ -1,7 +1,7 @@
 package stock.overseas.websocket;
 
+import lombok.extern.slf4j.Slf4j;
 import stock.overseas.directory.Stock;
-import stock.overseas.gui.MyGUI;
 
 import javax.websocket.DeploymentException;
 import java.io.IOException;
@@ -10,23 +10,22 @@ import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 public class WebSocketService  {
 
     private MessageHandler messageHandler;
     private WebSocketClient client;
-    private MyGUI myGUI;
 
     public WebSocketService(List<String> trKeyList) {
         this.messageHandler = new MessageHandlerImpl(trKeyList);
         this.client = WebSocketClient.getInstance();
-        this.myGUI = MyGUI.getInstance();
     }
 
     public void getConnection() throws DeploymentException, URISyntaxException, IOException {
 
         try {
             client.connect(new URI("ws://ops.koreainvestment.com:21000"));
-            myGUI.actionPerformed(LocalDateTime.now(), "Websocket 연결 => 성공");
+            log.info("[{}] {}", LocalDateTime.now(), "Websocket 연결 => 성공");
         } catch (URISyntaxException | DeploymentException | IOException e) {
             throw e;
         }
@@ -39,10 +38,11 @@ public class WebSocketService  {
         for (Stock stock : stockInfoList) {
             client.sendMessage(createSendMessage(approvalKey, stock.getTrKey()));
             String message = "[" + stock.getSymbol() + "] " + stock.getStockName() + " => 성공";
-            myGUI.actionPerformed(LocalDateTime.now(), message);
+            log.info("[{}] {}", LocalDateTime.now(), message);
         }
 
-        myGUI.actionPerformed(LocalDateTime.now(), "총 " + stockInfoList.size() + " 종목 실시간 체결 데이터 등록 완료");
+        String completionMessage = "총 " + stockInfoList.size() + " 종목 실시간 체결 데이터 등록 완료";
+        log.info("[{}] {}", LocalDateTime.now(), completionMessage);
     }
 
     private String createSendMessage(String approvalKey, String trKey) {

@@ -1,6 +1,6 @@
 package stock.overseas.websocket;
 
-import stock.overseas.gui.MyGUI;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.websocket.*;
 import java.io.IOException;
@@ -8,13 +8,13 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 
+@Slf4j
 @ClientEndpoint
 public class WebSocketClient {
 
     private Session userSession = null;
     private MessageHandler messageHandler;
     private static final WebSocketClient instance = new WebSocketClient();
-    private MyGUI myGUI = MyGUI.getInstance();
 
     public static WebSocketClient getInstance() {
         return instance;
@@ -55,7 +55,7 @@ public class WebSocketClient {
     @OnClose
     public void onClose() {
         this.userSession = null;
-        myGUI.actionPerformed(LocalDateTime.now(), "소켓 닫힘 => 성공");
+        log.info("[{}] {}", LocalDateTime.now(), "소켓 닫힘 => 성공");
     }
 
     @OnMessage
@@ -64,7 +64,7 @@ public class WebSocketClient {
             try {
                 this.messageHandler.handleMessage(message);
             } catch (IOException e) {
-                myGUI.actionPerformed(LocalDateTime.now(), "파일 작성 중 오류 발생");
+                log.info("[{}] {}", LocalDateTime.now(), "파일 작성 중 오류 발생");
             }
         }
     }
@@ -73,5 +73,4 @@ public class WebSocketClient {
     public void connectionError(Throwable t) {
         t.printStackTrace();
     }
-
 }

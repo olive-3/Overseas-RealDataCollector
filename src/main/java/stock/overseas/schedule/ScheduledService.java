@@ -1,19 +1,19 @@
 package stock.overseas.schedule;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import stock.overseas.gui.MyGUI;
 import stock.overseas.websocket.WebSocketClient;
 
 import javax.websocket.Session;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
+@Slf4j
 @Component
 public class ScheduledService {
 
     private WebSocketClient client = WebSocketClient.getInstance();
-    private MyGUI myGUI = MyGUI.getInstance();
 
     @Scheduled(cron = "${sendPingTime.cron}")
     public void maintainConnection() {
@@ -29,7 +29,7 @@ public class ScheduledService {
         try {
             session.close();
         } catch (IOException e) {
-            myGUI.actionPerformed(LocalDateTime.now(), "소켓 닫힘 => 실패");
+            log.info("[{}] {}", LocalDateTime.now(), "소켓 닫힘 => 실패");
         }
     }
 }

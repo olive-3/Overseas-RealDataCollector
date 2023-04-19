@@ -1,25 +1,28 @@
 package stock.overseas.directory;
 
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import stock.overseas.gui.MyGUI;
 import stock.overseas.websocket.StockFile;
 
 import java.io.*;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 public class DirectoryService {
 
     private String programPath = Paths.get("").toAbsolutePath().toString();
     private String jsonPath = programPath + File.separator + "RealDataCollector.json";
     private String realDataPath = programPath + File.separator + "RealData";
-    private MyGUI myGUI = MyGUI.getInstance();
 
     public void checkJsonFileExist() throws FileNotFoundException {
 
@@ -42,7 +45,7 @@ public class DirectoryService {
             String authValue = authentication.get(authKey).toString();
             if (authValue.isEmpty()) {
                 String errorMessage = "인증 관련 " + authKey + " 값이 존재 하지 않아 인증을 진행 할 수 없습니다. 해당 값을 설정 후 다시 실행해 주시기 바랍니다.";
-                myGUI.actionPerformed(LocalDateTime.now(), errorMessage);
+                log.info("[{}] {}", LocalDateTime.now(), errorMessage);
             }
         }
     }
@@ -90,7 +93,8 @@ public class DirectoryService {
                 try {
                     file.createNewFile();
                 } catch (IOException e) {
-                    myGUI.actionPerformed(LocalDateTime.now(), "txt 파일 생성 중 오류 발생");
+                    String errorMessage = "txt 파일 생성 중 오류 발생";
+                    log.info("[{}] {}", LocalDateTime.now(), errorMessage);
                 }
             }
 
@@ -141,7 +145,8 @@ public class DirectoryService {
                 try {
                     file.createNewFile();
                 } catch (IOException e) {
-                    myGUI.actionPerformed(LocalDateTime.now(), "파일 생성 중 오류 발생");
+                    String errorMessage = "파일 생성 중 오류 발생";
+                    log.info("[{}] {}", LocalDateTime.now(), errorMessage);
                 }
             }
         }
