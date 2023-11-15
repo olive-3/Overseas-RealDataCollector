@@ -1,20 +1,24 @@
 package stock.overseas.websocket;
 
-import stock.overseas.directory.DirectoryService;
+import lombok.extern.slf4j.Slf4j;
+import stock.overseas.directory.DirectoryServiceImpl;
+import stock.overseas.domain.StockFile;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 public class MessageHandlerImpl implements MessageHandler {
 
     private Map<String, StockFile> stockFiles;
-    private DirectoryService directoryService;
+    private DirectoryServiceImpl directoryService;
 
     public MessageHandlerImpl(List<String> trKeyList) {
-        directoryService = new DirectoryService();
+        directoryService = new DirectoryServiceImpl();
         stockFiles = directoryService.getStockFileMap(trKeyList);
     }
 

@@ -1,4 +1,4 @@
-package stock.overseas.websocket;
+package stock.overseas.domain;
 
 import java.io.File;
 
@@ -12,10 +12,6 @@ public class StockFile {
         this.stockName = stockName;
         this.file = file;
         this.sequence = sequence;
-    }
-
-    public String getStockName() {
-        return stockName;
     }
 
     public File getFile() {

@@ -2,41 +2,29 @@ package stock.overseas;
 
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.parser.ParseException;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import stock.overseas.directory.DirectoryService;
-import stock.overseas.directory.Stock;
+import stock.overseas.directory.DirectoryServiceImpl;
+import stock.overseas.domain.Stock;
 import stock.overseas.http.HttpService;
+import stock.overseas.websocket.MessageHandlerImpl;
 import stock.overseas.websocket.WebSocketClient;
-import stock.overseas.websocket.WebSocketService;
 
-import javax.annotation.PreDestroy;
-import javax.websocket.DeploymentException;
-import javax.websocket.Session;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-@EnableScheduling
-@SpringBootApplication
 public class MainApp {
 
     public static void main(String[] args) {
 
-		SpringApplicationBuilder builder = new SpringApplicationBuilder(MainApp.class);
-		builder.headless(false);
-		builder.run(args);
-
         String approvalKey = null;
-        DirectoryService directoryService = new DirectoryService();
-        HttpService httpService = new HttpService();
-
+        List<String> trKeyList = new ArrayList<>();
         List<Stock> stockInfoList = new ArrayList<>();
+
+        HttpService httpService = new HttpService();
+        DirectoryServiceImpl directoryService = new DirectoryServiceImpl();
 
         try {
             directoryService.checkJsonFileExist();
@@ -48,7 +36,6 @@ public class MainApp {
             log.info("[{}] {}", LocalDateTime.now(), "RealDataCollector.json 파일 파싱 중 오류 발생");
         }
 
-        List<String> trKeyList = new ArrayList<>();
         for (Stock stock : stockInfoList) {
             trKeyList.add(stock.getTrKey());
         }
@@ -64,25 +51,16 @@ public class MainApp {
             log.info("[{}] {}", LocalDateTime.now(), "RealDataCollector.json 파일 파싱 중 오류 발생");
         }
 
-        WebSocketService webSocketService = new WebSocketService(trKeyList);
-        try {
-            webSocketService.getConnection();
-        } catch (URISyntaxException | DeploymentException | IOException e) {
-            log.info("[{}] {}", LocalDateTime.now(), "Websocket 연결 => 실패");
-        }
+        WebSocketClient webSocketClient = new WebSocketClient(approvalKey, stockInfoList);
+        webSocketClient.addMessageHandler(new MessageHandlerImpl(trKeyList));
+        webSocketClient.connectAndSubscribe();
 
-        webSocketService.sendMessage(approvalKey, stockInfoList);
-    }
-
-    @PreDestroy
-    public static void forceWebsocketClose() {
-        Session session = WebSocketClient.getInstance().getUserSession();
         try {
-            if(session != null) {
-                session.close();
+            while (true) {
+                Thread.sleep(1000);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }

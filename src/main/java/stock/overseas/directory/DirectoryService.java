@@ -1,163 +1,25 @@
 package stock.overseas.directory;
 
-import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import stock.overseas.websocket.StockFile;
+import stock.overseas.domain.Stock;
+import stock.overseas.domain.StockFile;
 
-import java.io.*;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-@Slf4j
-public class DirectoryService {
+public interface DirectoryService {
 
-    private String programPath = Paths.get("").toAbsolutePath().toString();
-    private String jsonPath = programPath + File.separator + "RealDataCollector.json";
-    private String realDataPath = programPath + File.separator + "RealData";
+    void checkJsonFileExist() throws FileNotFoundException;
 
-    public void checkJsonFileExist() throws FileNotFoundException {
+    void checkJsonFileForm() throws IOException, ParseException;
 
-        File jsonFile = new File(jsonPath);
-        if (!jsonFile.exists()) {
-            throw new FileNotFoundException();
-        }
-    }
+    void initStock(List<Stock> stockListInfo) throws IOException, ParseException;
 
-    public void checkJsonFileForm() throws IOException, ParseException {
+    Map<String, StockFile> getStockFileMap(List<String> trKeyList);
 
-        Reader reader = new FileReader(jsonPath);
+    void checkDirectoryExist(List<String> trKeyList);
 
-        JSONParser parser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) parser.parse(reader);   // throw IOException, ParseException
-        JSONObject authentication = (JSONObject) jsonObject.get("Authentication");
-
-        List<String> jsonAuthKeyList = Arrays.asList("GrantType", "AppKey", "SecretKey");
-        for (String authKey : jsonAuthKeyList) {
-            String authValue = authentication.get(authKey).toString();
-            if (authValue.isEmpty()) {
-                String errorMessage = "인증 관련 " + authKey + " 값이 존재 하지 않아 인증을 진행 할 수 없습니다. 해당 값을 설정 후 다시 실행해 주시기 바랍니다.";
-                log.info("[{}] {}", LocalDateTime.now(), errorMessage);
-            }
-        }
-    }
-
-    public void initStock(List<Stock> stockListInfo) throws IOException, ParseException {
-
-        Map<String, String> marketMap = new HashMap<>();
-        marketMap.put("NASDAQ", "NAS");
-        marketMap.put("AMEX", "AMS");
-        marketMap.put("NYSE", "NYS");
-
-        Reader reader = new FileReader(jsonPath);
-
-        JSONParser parser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) parser.parse(reader);
-        JSONObject stocks = (JSONObject) jsonObject.get("Stocks");
-
-        for (String key : marketMap.keySet()) {
-            Object market = stocks.get(key);
-            if (market != null) {
-                JSONArray marketArray = (JSONArray) stocks.get(key);
-                for (Object arr : marketArray) {
-                    String symbol = ((JSONObject) arr).get("Symbol").toString();
-                    String stockName = ((JSONObject) arr).get("Name").toString();
-                    String trKey = "D" + marketMap.get(key) + symbol;
-
-                    Stock stock = new Stock(symbol, stockName, trKey);
-                    stockListInfo.add(stock);
-                }
-            }
-        }
-    }
-
-    public Map<String, StockFile> getStockFileMap(List<String> trKeyList) {
-
-        Map<String, StockFile> stockFiles = new ConcurrentHashMap<>();
-
-        for (String trKey : trKeyList) {
-
-            String stockName = trKey.substring(4);
-            String path = getPath(stockName);
-            File file = new File(path);
-
-            if(!file.exists()) {
-                try {
-                    file.createNewFile();
-                } catch (IOException e) {
-                    String errorMessage = "txt 파일 생성 중 오류 발생";
-                    log.info("[{}] {}", LocalDateTime.now(), errorMessage);
-                }
-            }
-
-            StockFile stockFile = new StockFile(stockName, file, 0L);
-            stockFiles.put(trKey, stockFile);
-        }
-
-        return stockFiles;
-    }
-
-    public void checkDirectoryExist(List<String> trKeyList) {
-
-        makeRealDataDirectory();
-        for (String trKey : trKeyList) {
-            makeTickerAndYearDirectory(trKey);
-        }
-    }
-
-    private void makeRealDataDirectory() {
-
-        File folder = new File(realDataPath);
-
-        if (!folder.exists()) {
-            folder.mkdir();
-        }
-    }
-
-    private void makeTickerAndYearDirectory(String trKey) {
-
-        int year = LocalDateTime.now().getYear();
-        String stockName = trKey.substring(4);
-        String pathTickerYear = realDataPath + File.separator + stockName + File.separator + year;
-        File folder = new File(pathTickerYear);
-
-        if (!folder.exists()) {
-            folder.mkdirs();
-        }
-    }
-
-    public void makeFiles(List<String> trKeyList) {
-
-        for (String trKey : trKeyList) {
-            String stockName = trKey.substring(4);
-            String path = getPath(stockName);
-            File file = new File(path);
-
-            if (!file.exists()) {
-                try {
-                    file.createNewFile();
-                } catch (IOException e) {
-                    String errorMessage = "파일 생성 중 오류 발생";
-                    log.info("[{}] {}", LocalDateTime.now(), errorMessage);
-                }
-            }
-        }
-    }
-
-    private String getPath(String key) {
-
-        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")).substring(2, 8);
-        int year = LocalDateTime.now().getYear();
-        String filePath = realDataPath + File.separator + key + File.separator + year + File.separator + key + "_" + date + ".txt";
-
-        return filePath;
-    }
+    void makeFiles(List<String> trKeyList);
 }

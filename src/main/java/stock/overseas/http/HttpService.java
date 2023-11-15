@@ -58,7 +58,7 @@ public class HttpService {
         Reader reader = new FileReader(jsonPath);
 
         JSONParser parser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) parser.parse(reader);   // throw IOException, ParseException
+        JSONObject jsonObject = (JSONObject) parser.parse(reader);
         JSONObject authentication = (JSONObject) jsonObject.get("Authentication");
 
         JSONObject body = new JSONObject();
