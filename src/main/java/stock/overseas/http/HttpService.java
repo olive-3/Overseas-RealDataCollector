@@ -46,6 +46,7 @@ public class HttpService {
             log.info("[{}] {}", LocalDateTime.now(), "로그온 => 성공");
         } catch (HttpClientErrorException e) {
             log.info("[{}] {}", LocalDateTime.now(), "로그온 => 실패");
+            throw new RuntimeException();
         }
 
         return approval_key;
