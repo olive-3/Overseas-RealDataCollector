@@ -21,7 +21,8 @@ HSX : 호치민, HNX : 하노이
 **참고**  
 build 하다 에러 발생하는 경우 /stock 위치에서 `./gradlew clean` 실행하면 된다. 그러면 build 파일이 사라진다.  
 
-**예시 이미지 첨부** 
+**예시 이미지 첨부**   
+<img width="510" alt="Screenshot 2023-12-12 at 4 07 19 PM" src="https://github.com/olive-3/stock/assets/75265310/d8dad92b-fd8a-4abe-b712-8e7d47a2a040">  
 
 ### 윈도우
 1. 콘솔로 이동 명령 프롬프트(cmd)로 이동
