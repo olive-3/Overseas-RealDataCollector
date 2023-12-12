@@ -33,10 +33,10 @@ public class MainApp {
             directoryService.checkJsonFileForm();
             directoryService.initStock(stockInfoList);
         } catch (FileNotFoundException e) {
-            log.info("[{}] {}", LocalDateTime.now(), "RealDataCollector.json 파일이 존재하지 않습니다.");
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 파일이 존재하지 않습니다.");
             return;
         } catch (IOException | ParseException e) {
-            log.info("[{}] {}", LocalDateTime.now(), "RealDataCollector.json 파일 파싱 중 오류 발생");
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 파일 파싱 중 오류 발생");
             return;
         }
 
@@ -44,6 +44,7 @@ public class MainApp {
             trKeyList.add(stock.getTrKey());
         }
 
+        //폴더, 파일 생성
         directoryService.checkDirectoryExist(trKeyList);
         directoryService.makeFiles(trKeyList);
 
@@ -51,10 +52,10 @@ public class MainApp {
         try {
             approvalKey = httpService.getApprovalKey();
         } catch (IOException e) {
-            log.info("[{}] {}", LocalDateTime.now(), "RealDataCollector.json 파일이 존재하지 않습니다.");
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 파일이 존재하지 않습니다.");
             return;
         } catch (ParseException e) {
-            log.info("[{}] {}", LocalDateTime.now(), "RealDataCollector.json 파일 파싱 중 오류 발생");
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 파일 파싱 중 오류 발생");
             return;
         } catch (RuntimeException e) {
             return;

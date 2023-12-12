@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Slf4j
@@ -43,9 +44,9 @@ public class HttpService {
             ResponseEntity<JSONObject> response = restTemplate.postForEntity(uri.toString(), entity, JSONObject.class);
             JSONObject json = response.getBody();
             approval_key = (String)json.get("approval_key");
-            log.info("[{}] {}", LocalDateTime.now(), "로그온 => 성공");
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "웹소켓 토큰 발급 => 성공");
         } catch (HttpClientErrorException e) {
-            log.info("[{}] {}", LocalDateTime.now(), "로그온 => 실패");
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "웹소켓 토큰 발급 => 성공");
             throw new RuntimeException();
         }
 

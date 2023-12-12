@@ -13,6 +13,7 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class WebSocketClient {
 
     private String approvalKey;
     private List<Stock> stockInfoList;
+    List<String> trKeyList = new ArrayList<>();
 
     private Session userSession = null;
     private MessageHandler messageHandler;
@@ -29,9 +31,7 @@ public class WebSocketClient {
     public WebSocketClient(String approvalKey, List<Stock> stockInfoList, List<String> trKeyList) {
         this.approvalKey = approvalKey;
         this.stockInfoList = stockInfoList;
-
-        // add listener
-        this.messageHandler = new MessageHandler(trKeyList);
+        this.trKeyList = trKeyList;
     }
 
     public void connect(URI endpointURI) throws DeploymentException, IOException {
@@ -53,6 +53,9 @@ public class WebSocketClient {
     public void onOpen(Session userSession) throws InterruptedException {
         this.userSession = userSession;
         log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 연결 => 성공");
+
+        // add listener
+        this.messageHandler = new MessageHandler(trKeyList);
 
         //send message to websocket
         subscribeStocks();
@@ -111,6 +114,15 @@ public class WebSocketClient {
         this.userSession.getAsyncRemote().sendText(message);
     }
 
+    /**
+     * add a messagehandler
+     *
+     * @param messageHandler
+     */
+    public void addMessageHandler(MessageHandler messageHandler) {
+        this.messageHandler = messageHandler;
+    }
+
     public void subscribeStocks() throws InterruptedException {
         for (Stock stock : stockInfoList) {
             sendMessage(createSendMessage(approvalKey, stock.getTrKey()));
@@ -119,9 +131,6 @@ public class WebSocketClient {
 
         // wait 10 seconds for messages from websocket
         Thread.sleep(1000);
-
-//        String completeMessage = "총 " + stockInfoList.size() + " 종목 실시간 체결 데이터 등록 완료";
-//        log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), completeMessage);
     }
 
     //"{"header": {"tr_type":"1", "approval_key":" + approvalKey + ", "custtype":""}, "body": {"input": {"tr_id":"", "tr_key":" + trKey + "}}}

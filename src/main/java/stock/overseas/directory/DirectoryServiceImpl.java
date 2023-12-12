@@ -46,7 +46,7 @@ public class DirectoryServiceImpl implements DirectoryService {
             String authValue = authentication.get(authKey).toString();
             if (authValue.isEmpty()) {
                 String errorMessage = "인증 관련 " + authKey + " 값이 존재 하지 않아 인증을 진행 할 수 없습니다. 해당 값을 설정 후 다시 실행해 주시기 바랍니다.";
-                log.info("[{}] {}", LocalDateTime.now(), errorMessage);
+                log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), errorMessage);
             }
         }
     }
@@ -94,8 +94,7 @@ public class DirectoryServiceImpl implements DirectoryService {
                 try {
                     file.createNewFile();
                 } catch (IOException e) {
-                    String errorMessage = "txt 파일 생성 중 오류 발생";
-                    log.info("[{}] {}", LocalDateTime.now(), errorMessage);
+                    log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "txt 파일 작성 중 오류 발생");
                 }
             }
 
@@ -146,8 +145,7 @@ public class DirectoryServiceImpl implements DirectoryService {
                 try {
                     file.createNewFile();
                 } catch (IOException e) {
-                    String errorMessage = "파일 생성 중 오류 발생";
-                    log.info("[{}] {}", LocalDateTime.now(), errorMessage);
+                    log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "파일 생성 중 오류 발생");
                 }
             }
         }

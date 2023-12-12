@@ -13,18 +13,23 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
 public class MessageHandler {
 
-    private Map<String, StockFile> stockFiles;
+    private int count;
+    private int totalCount;
     private DirectoryServiceImpl directoryService;
+    private Map<String, StockFile> stockFiles = new HashMap<>();
     private List<String> trKeyList = new ArrayList<>();
 
     public MessageHandler(List<String> trKeyList) {
         this.trKeyList = trKeyList;
+        this.count = 0;
+        this.totalCount = trKeyList.size();
     }
 
     public void handleMessage(String message) throws ParseException, IOException {
@@ -34,32 +39,41 @@ public class MessageHandler {
             return;
         }
 
-        if(message.contains("SUCCESS")) {
-            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "구독 성공");
-        } else {
-            handlingException(message);
+        //Subscribe 메세지
+        if (message.contains("msg_cd")) {
+            JSONParser parser = new JSONParser();
+            JSONObject jsonObject = (JSONObject) parser.parse(message);
+            JSONObject header  = (JSONObject) jsonObject.get("header");
+            JSONObject body  = (JSONObject) jsonObject.get("body");
+            String symbol = header.get("tr_key").toString().substring(4);
+            String responseMessage = body.get("msg1").toString();
+
+            if(("SUBSCRIBE SUCCESS").equals(responseMessage)) {
+                log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "[" + symbol + "] => 등록 성공");
+                count++;
+
+                //Subscribe 모두 성공
+                if(count == totalCount) {
+                    String completeMessage = "총 " + totalCount + " 종목 실시간 체결 데이터 등록 완료";
+                    log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), completeMessage);
+                }
+
+                return;
+            } else {
+                throw new IllegalArgumentException(responseMessage);
+            }
         }
 
-        //Subscribe 성공
+        //정상 데이터
         String[] getData = message.split("\\^");
         String trKey = getData[0].split("\\|")[3];
 
         write(trKey, getData);
     }
 
-    private void handlingException(String message) throws ParseException {
-
-        JSONParser parser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) parser.parse(message);
-        JSONObject body  = (JSONObject) jsonObject.get("body");
-        String errorMessage = body.get("msg1").toString();
-
-        throw new IllegalArgumentException(errorMessage);
-    }
-
     private void write(String trKey, String[] getData) throws IOException {
 
-        stockFiles = directoryService.getStockFileMap(trKeyList);
+        this.stockFiles = directoryService.getStockFileMap(trKeyList);
         StockFile stockFile = stockFiles.get(trKey);
         long sequence = stockFile.getSequence();
         stockFile.setSequence(++sequence);
@@ -81,7 +95,7 @@ public class MessageHandler {
             writer.write(getData[25]);  // 시장구분
             writer.newLine();
         } catch (IOException e) {
-            log.info("[{}] {}", LocalDateTime.now(), "파일 작성 중 오류 발생");
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "파일 작성 중 오류 발생");
         } finally {
             writer.close();
         }
