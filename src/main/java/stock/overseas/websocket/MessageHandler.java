@@ -22,7 +22,7 @@ public class MessageHandler {
 
     private int count;
     private int totalCount;
-    private DirectoryServiceImpl directoryService;
+    private DirectoryServiceImpl directoryService = new DirectoryServiceImpl();
     private Map<String, StockFile> stockFiles = new HashMap<>();
     private List<String> trKeyList = new ArrayList<>();
 
@@ -30,6 +30,7 @@ public class MessageHandler {
         this.trKeyList = trKeyList;
         this.count = 0;
         this.totalCount = trKeyList.size();
+        this.stockFiles = directoryService.getStockFileMap(trKeyList);
     }
 
     public void handleMessage(String message) throws ParseException, IOException {
@@ -73,7 +74,6 @@ public class MessageHandler {
 
     private void write(String trKey, String[] getData) throws IOException {
 
-        this.stockFiles = directoryService.getStockFileMap(trKeyList);
         StockFile stockFile = stockFiles.get(trKey);
         long sequence = stockFile.getSequence();
         stockFile.setSequence(++sequence);

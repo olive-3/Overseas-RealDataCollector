@@ -95,8 +95,10 @@ public class WebSocketClient {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "프로그램 종료");
             System.exit(-1);
         } catch (RuntimeException e) {
-            CloseReason closeReason = new CloseReason(CloseReason.CloseCodes.UNEXPECTED_CONDITION, e.getMessage());
-            userSession.close(closeReason);
+            if (userSession != null) {
+                CloseReason closeReason = new CloseReason(CloseReason.CloseCodes.UNEXPECTED_CONDITION, e.getMessage());
+                userSession.close(closeReason);
+            }
         }
     }
 
@@ -130,7 +132,7 @@ public class WebSocketClient {
         }
 
         // wait 10 seconds for messages from websocket
-        Thread.sleep(1000);
+//        Thread.sleep(1000);
     }
 
     //"{"header": {"tr_type":"1", "approval_key":" + approvalKey + ", "custtype":""}, "body": {"input": {"tr_id":"", "tr_key":" + trKey + "}}}
