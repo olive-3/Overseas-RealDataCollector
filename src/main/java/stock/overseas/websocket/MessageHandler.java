@@ -35,6 +35,8 @@ public class MessageHandler {
 
     public void handleMessage(String message) throws ParseException, IOException {
 
+        log.info("{}", message);
+
         //PINGPONG 메세지
         if (message.contains("PINGPONG")) {
             return;
@@ -44,12 +46,12 @@ public class MessageHandler {
         if (message.contains("msg_cd")) {
             JSONParser parser = new JSONParser();
             JSONObject jsonObject = (JSONObject) parser.parse(message);
-            JSONObject header  = (JSONObject) jsonObject.get("header");
             JSONObject body  = (JSONObject) jsonObject.get("body");
-            String symbol = header.get("tr_key").toString().substring(4);
             String responseMessage = body.get("msg1").toString();
 
             if(("SUBSCRIBE SUCCESS").equals(responseMessage)) {
+                JSONObject header  = (JSONObject) jsonObject.get("header");
+                String symbol = header.get("tr_key").toString().substring(4);
                 log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "[" + symbol + "] => 등록 성공");
                 count++;
 
