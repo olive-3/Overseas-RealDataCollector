@@ -8,8 +8,10 @@ import stock.overseas.directory.DirectoryServiceImpl;
 import stock.overseas.domain.StockFile;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -26,14 +28,22 @@ public class MessageHandler {
     private Map<String, StockFile> stockFiles = new HashMap<>();
     private List<String> trKeyList = new ArrayList<>();
 
-    public MessageHandler(List<String> trKeyList) {
+    private String programPath = Paths.get("").toAbsolutePath().toString();
+    private String filePath = programPath + File.separator + "Message.txt";
+
+    public MessageHandler(List<String> trKeyList) throws IOException {
         this.trKeyList = trKeyList;
         this.count = 0;
         this.totalCount = trKeyList.size();
         this.stockFiles = directoryService.getStockFileMap(trKeyList);
+
+        File file = new File(filePath);
+        file.createNewFile();
     }
 
     public void handleMessage(String message) throws ParseException, IOException {
+
+        writeMessage(message);
 
         //PINGPONG 메세지
         if (message.contains("PINGPONG")) {
@@ -96,6 +106,23 @@ public class MessageHandler {
             writer.newLine();
         } catch (IOException e) {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "파일 작성 중 오류 발생");
+        } finally {
+            writer.close();
+        }
+    }
+
+
+    private void writeMessage(String message) throws IOException {
+
+        FileWriter fw = null;
+        BufferedWriter writer = null;
+        try {
+            fw = new FileWriter(filePath, true);
+            writer = new BufferedWriter(fw);
+            writer.write(message);
+            writer.newLine();
+        } catch (IOException e) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "메세지 파일 작성 중 오류 발생");
         } finally {
             writer.close();
         }

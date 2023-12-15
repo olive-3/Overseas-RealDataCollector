@@ -50,7 +50,7 @@ public class WebSocketClient {
      * @param userSession the userSession which is opened.
      */
     @OnOpen
-    public void onOpen(Session userSession) throws InterruptedException {
+    public void onOpen(Session userSession) throws InterruptedException, IOException {
         this.userSession = userSession;
         log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 연결 => 성공");
 
