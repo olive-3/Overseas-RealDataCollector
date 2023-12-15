@@ -105,11 +105,14 @@ public class DirectoryServiceImpl implements DirectoryService {
         return stockFiles;
     }
 
+    /*
+     * RealData/주식명 디렉토리 존재 유무 -> 존재하지 않는 경우, 생성
+     */
     public void checkDirectoryExist(List<String> trKeyList) {
 
         makeRealDataDirectory();
         for (String trKey : trKeyList) {
-            makeTickerAndYearDirectory(trKey);
+            makeTickerDirectory(trKey);
         }
     }
 
@@ -122,12 +125,11 @@ public class DirectoryServiceImpl implements DirectoryService {
         }
     }
 
-    private void makeTickerAndYearDirectory(String trKey) {
+    private void makeTickerDirectory(String trKey) {
 
-        int year = LocalDateTime.now().getYear();
         String stockName = trKey.substring(4);
-        String pathTickerYear = realDataPath + File.separator + stockName + File.separator + year;
-        File folder = new File(pathTickerYear);
+        String pathTicker = realDataPath + File.separator + stockName;
+        File folder = new File(pathTicker);
 
         if (!folder.exists()) {
             folder.mkdirs();
@@ -154,8 +156,7 @@ public class DirectoryServiceImpl implements DirectoryService {
     private String getPath(String key) {
 
         String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")).substring(2, 8);
-        int year = LocalDateTime.now().getYear();
-        String filePath = realDataPath + File.separator + key + File.separator + year + File.separator + key + "_" + date + ".txt";
+        String filePath = realDataPath + File.separator + key + File.separator + key + "_" + date + ".txt";
 
         return filePath;
     }

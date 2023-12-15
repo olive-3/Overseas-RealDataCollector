@@ -35,8 +35,6 @@ public class MessageHandler {
 
     public void handleMessage(String message) throws ParseException, IOException {
 
-        log.info("{}", message);
-
         //PINGPONG 메세지
         if (message.contains("PINGPONG")) {
             return;
