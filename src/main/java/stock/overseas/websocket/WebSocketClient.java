@@ -117,6 +117,22 @@ public class WebSocketClient {
     }
 
     /**
+     * Send a pong.
+     *
+     * {"header":{"tr_id":"PINGPONG"}}
+     */
+    public void sendPong() throws IOException {
+        HashMap<String, Object> jsonHeader = new HashMap<>();
+        jsonHeader.put("tr_id", "PINGPONG");
+
+        HashMap<String, Object> json = new HashMap<>();
+        json.put("header", jsonHeader);
+
+        String msg = new ObjectMapper().writeValueAsString(json);
+        this.userSession.getAsyncRemote().sendPong(ByteBuffer.wrap((msg).getBytes("UTF-8")));
+    }
+
+    /**
      * add a messagehandler
      *
      * @param messageHandler
@@ -125,14 +141,15 @@ public class WebSocketClient {
         this.messageHandler = messageHandler;
     }
 
+    public Session getUserSession() {
+        return userSession;
+    }
+
     public void subscribeStocks() throws InterruptedException {
         for (Stock stock : stockInfoList) {
             sendMessage(createSendMessage(approvalKey, stock.getTrKey()));
             Thread.sleep(500);
         }
-
-        // wait 10 seconds for messages from websocket
-//        Thread.sleep(1000);
     }
 
     //"{"header": {"tr_type":"1", "approval_key":" + approvalKey + ", "custtype":""}, "body": {"input": {"tr_id":"", "tr_key":" + trKey + "}}}
@@ -162,7 +179,7 @@ public class WebSocketClient {
         try {
             sendJson = new ObjectMapper().writeValueAsString(json);
         } catch (JsonProcessingException e) {
-            System.out.println(e.getMessage());
+            log.info("{}", e.getMessage());
         }
 
         return sendJson;

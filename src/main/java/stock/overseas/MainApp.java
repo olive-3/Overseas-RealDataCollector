@@ -2,11 +2,13 @@ package stock.overseas;
 
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.parser.ParseException;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import stock.overseas.directory.DirectoryServiceImpl;
 import stock.overseas.domain.Stock;
 import stock.overseas.http.HttpService;
 import stock.overseas.websocket.WebSocketClient;
 
+import javax.websocket.Session;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
+@EnableScheduling
 public class MainApp {
 
     public static void main(String[] args) {
@@ -62,20 +65,26 @@ public class MainApp {
         }
 
         //WebSocket 연결
+        WebSocketClient webSocketClient;
         try {
-            WebSocketClient webSocketClient = new WebSocketClient(approvalKey, stockInfoList, trKeyList);
+            webSocketClient = new WebSocketClient(approvalKey, stockInfoList, trKeyList);
             webSocketClient.connect(new URI("ws://ops.koreainvestment.com:21000"));
         } catch (Exception e) {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "프로그램 종료");
             return;
         }
 
-        try {
-            while (true) {
-                Thread.sleep(1000);
+        while(true) {
+            try {
+                Session session = webSocketClient.getUserSession();
+                if (session != null) {
+                    webSocketClient.sendPong();
+                }
+
+                Thread.sleep(100000);   //100초
+            } catch (Exception e) {
+                log.info("{}", e.getMessage());
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 }

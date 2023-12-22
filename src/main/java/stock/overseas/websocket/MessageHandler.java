@@ -111,7 +111,6 @@ public class MessageHandler {
         }
     }
 
-
     private void writeMessage(String message) throws IOException {
 
         FileWriter fw = null;
