@@ -83,13 +83,22 @@ public class MessageHandler {
         }
 
         //정상 데이터
-        String[] getData = message.split("\\^");
-        String trKey = getData[0].split("\\|")[3];
+        String[] getData = message.split("\\|");
+        int dataNum = Integer.parseInt(getData[2]);
+        String trKey = getData[3].split("\\^")[0];
 
-        write(trKey, getData);
+        if(dataNum == 1) {
+            write(trKey, getData[3]);
+        }
+        else {
+            String[] stockDataList = getData[3].split(trKey);
+            for (String stockData : stockDataList) {
+                write(trKey, trKey + stockData);
+            }
+        }
     }
 
-    private void write(String trKey, String[] getData) throws IOException {
+    private void write(String trKey, String stockDataString) throws IOException {
 
         StockFile stockFile = stockFiles.get(trKey);
         long sequence = stockFile.getSequence();
@@ -101,15 +110,17 @@ public class MessageHandler {
             fw = new FileWriter(stockFile.getFile(), true);
             writer = new BufferedWriter(fw);
 
+            String[] stockData = stockDataString.split("\\^");
+
             writer.write(String.valueOf(sequence));
             writer.write(",");
-            writer.write(getData[5]);   // 현지시간
+            writer.write(stockData[5]);   // 현지시간
             writer.write(",");
-            writer.write(getData[11].replace(".", ""));  // 현재가
+            writer.write(stockData[11].replace(".", ""));  // 현재가
             writer.write(",");
-            writer.write(getData[19]);   // 체결량
+            writer.write(stockData[19]);   // 체결량
             writer.write(",");
-            writer.write(getData[25]);  // 시장구분
+            writer.write(stockData[25]);  // 시장구분
             writer.newLine();
         } catch (IOException e) {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "파일 작성 중 오류 발생");
