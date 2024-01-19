@@ -160,4 +160,16 @@ public class DirectoryServiceImpl implements DirectoryService {
 
         return filePath;
     }
+
+    public boolean isEnableDebugLog() throws IOException, ParseException {
+
+        Reader reader = new FileReader(jsonPath);
+
+        JSONParser parser = new JSONParser();
+        JSONObject jsonObject = (JSONObject) parser.parse(reader);
+        JSONObject settings = (JSONObject) jsonObject.get("Settings");
+
+        Boolean enableDebugLog = (Boolean) settings.get("EnableDebugLog");
+        return enableDebugLog;
+    }
 }

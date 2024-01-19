@@ -24,26 +24,33 @@ public class MessageHandler {
 
     private int count;
     private int totalCount;
+    private boolean enableDebugLog;
     private DirectoryServiceImpl directoryService = new DirectoryServiceImpl();
     private Map<String, StockFile> stockFiles = new HashMap<>();
     private List<String> trKeyList = new ArrayList<>();
 
     private String programPath = Paths.get("").toAbsolutePath().toString();
-    private String filePath = programPath + File.separator + "Message.txt";
+    private String filePath = programPath + File.separator + "Log.txt";
 
-    public MessageHandler(List<String> trKeyList) throws IOException {
+    public MessageHandler(List<String> trKeyList) throws IOException, ParseException {
         this.trKeyList = trKeyList;
         this.count = 0;
         this.totalCount = trKeyList.size();
         this.stockFiles = directoryService.getStockFileMap(trKeyList);
+        this.enableDebugLog = directoryService.isEnableDebugLog();
 
-        File file = new File(filePath);
-        file.createNewFile();
+        if(enableDebugLog) {
+            File file = new File(filePath);
+            file.createNewFile();
+        }
     }
 
     public void handleMessage(String message) throws ParseException, IOException {
 
-        writeMessage(message);
+        //전체 로그 기록
+        if(enableDebugLog) {
+            writeMessage(message);
+        }
 
         //PINGPONG 메세지
         if (message.contains("PINGPONG")) {
