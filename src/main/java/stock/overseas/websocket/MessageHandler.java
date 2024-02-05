@@ -84,7 +84,7 @@ public class MessageHandler {
 
         //정상 데이터
         String[] getData = message.split("\\|");
-        int dataNum = Integer.parseInt(getData[2]);
+        int dataNum = Integer.parseInt(getData[2]); //2
         String trKey = getData[3].split("\\^")[0];
 
         if(dataNum == 1) {
@@ -92,8 +92,8 @@ public class MessageHandler {
         }
         else {
             String[] stockDataList = getData[3].split(trKey);
-            for (String stockData : stockDataList) {
-                write(trKey, trKey + stockData);
+            for(int i = 1; i < stockDataList.length; i++) {
+                write(trKey, trKey + stockDataList[i]);
             }
         }
     }

@@ -136,7 +136,7 @@
     ]
   },
   "Settings": {
-    "EnableDebugLog": false,
+    "EnableDebugLog": "false",
     "AutoClosingTime": "100000"
   }
 }
