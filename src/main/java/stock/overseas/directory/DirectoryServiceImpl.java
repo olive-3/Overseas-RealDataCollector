@@ -169,7 +169,7 @@ public class DirectoryServiceImpl implements DirectoryService {
         JSONObject jsonObject = (JSONObject) parser.parse(reader);
         JSONObject settings = (JSONObject) jsonObject.get("Settings");
 
-        Boolean enableDebugLog = (Boolean) settings.get("EnableDebugLog");
+        Boolean enableDebugLog = Boolean.valueOf(settings.get("EnableDebugLog").toString().toLowerCase());
         return enableDebugLog;
     }
 }
