@@ -155,7 +155,7 @@ public class DirectoryServiceImpl implements DirectoryService {
 
     private String getPath(String key) {
 
-        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")).substring(2, 8);
+        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String filePath = realDataPath + File.separator + key + File.separator + key + "_" + date + ".txt";
 
         return filePath;
