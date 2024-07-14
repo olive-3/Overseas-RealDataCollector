@@ -25,20 +25,29 @@ public class DirectoryServiceImpl implements DirectoryService {
     private String jsonPath = programPath + File.separator + "RealDataCollector.json";
     private String realDataPath = programPath + File.separator + "RealData";
 
-    public void checkJsonFileExist() throws FileNotFoundException {
+    /**
+     * RealDataCollector.json 파일에 등록된 주식 목록 조회
+     */
+    public boolean getStockListFromJsonFile(List<Stock> stockListInfo) {
 
-        File jsonFile = new File(jsonPath);
-        if (!jsonFile.exists()) {
-            throw new FileNotFoundException();
+        Reader reader;
+        try {
+            reader = new FileReader(jsonPath);
+        } catch (FileNotFoundException e) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 파일이 존재하지 않습니다.");
+            return false;
         }
-    }
-
-    public void checkJsonFileForm() throws IOException, ParseException {
-
-        Reader reader = new FileReader(jsonPath);
 
         JSONParser parser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) parser.parse(reader);
+        JSONObject jsonObject;
+        try {
+            jsonObject = (JSONObject) parser.parse(reader);
+        } catch (IOException | ParseException e) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 파일 파싱 중 오류가 발생했습니다.");
+            return false;
+        }
+
+        //JSON 파일에서 인증 파트 유효성 검사
         JSONObject authentication = (JSONObject) jsonObject.get("Authentication");
 
         List<String> jsonAuthKeyList = Arrays.asList("GrantType", "AppKey", "SecretKey");
@@ -47,22 +56,17 @@ public class DirectoryServiceImpl implements DirectoryService {
             if (authValue.isEmpty()) {
                 String errorMessage = "인증 관련 " + authKey + " 값이 존재 하지 않아 인증을 진행 할 수 없습니다. 해당 값을 설정 후 다시 실행해 주시기 바랍니다.";
                 log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), errorMessage);
+                return false;
             }
         }
-    }
 
-    public void initStock(List<Stock> stockListInfo) throws IOException, ParseException {
+        //JSON 파일에 등록된 주식 get
+        JSONObject stocks = (JSONObject) jsonObject.get("Stocks");
 
         Map<String, String> marketMap = new HashMap<>();
         marketMap.put("NASDAQ", "NAS");
         marketMap.put("AMEX", "AMS");
         marketMap.put("NYSE", "NYS");
-
-        Reader reader = new FileReader(jsonPath);
-
-        JSONParser parser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) parser.parse(reader);
-        JSONObject stocks = (JSONObject) jsonObject.get("Stocks");
 
         for (String key : marketMap.keySet()) {
             Object market = stocks.get(key);
@@ -78,6 +82,8 @@ public class DirectoryServiceImpl implements DirectoryService {
                 }
             }
         }
+
+        return true;
     }
 
     public Map<String, StockFile> getStockFileMap(List<String> trKeyList) {
@@ -90,7 +96,7 @@ public class DirectoryServiceImpl implements DirectoryService {
             String path = getPath(stockName);
             File file = new File(path);
 
-            if(!file.exists()) {
+            if (!file.exists()) {
                 try {
                     file.createNewFile();
                 } catch (IOException e) {
