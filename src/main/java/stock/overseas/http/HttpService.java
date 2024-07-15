@@ -2,74 +2,58 @@ package stock.overseas.http;
 
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
+import stock.overseas.domain.AuthenticationInfo;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 
 @Slf4j
 public class HttpService {
 
-    public String getApprovalKey() throws IOException, ParseException {
+    /**
+     * 실시간 (웹소켓) 접속키 발급
+     */
+    public String getApprovalKey(AuthenticationInfo authenticationInfo) {
 
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        JSONObject body = getJsonObject();
+        JSONObject body = createHttpBody(authenticationInfo);
         HttpEntity<JSONObject> entity = new HttpEntity<>(body, headers);
 
         UriComponents uri = UriComponentsBuilder
                 .fromHttpUrl("https://openapi.koreainvestment.com:9443/oauth2/Approval")
                 .build();
 
-        String approval_key = null;
+        String approvalKey = null;
         try {
             ResponseEntity<JSONObject> response = restTemplate.postForEntity(uri.toString(), entity, JSONObject.class);
-            JSONObject json = response.getBody();
-            approval_key = (String)json.get("approval_key");
-            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "웹소켓 토큰 발급 => 성공");
+            if (response.getStatusCode().is2xxSuccessful()) {
+                JSONObject json = response.getBody();
+                approvalKey = (String) json.get("approval_key");
+                log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "웹소켓 토큰 발급 => 성공");
+            } else {
+                log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "웹소켓 토큰 발급 => 실패");
+            }
         } catch (HttpClientErrorException e) {
-            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "웹소켓 토큰 발급 => 성공");
-            throw new RuntimeException();
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "웹소켓 토큰 발급 => 실패 " + e.getStatusCode());
         }
 
-        return approval_key;
+           return approvalKey;
     }
 
-    private JSONObject getJsonObject() throws IOException, ParseException {
-
-        String programPath = Paths.get("").toAbsolutePath().toString();
-        String jsonPath = programPath + File.separator + "RealDataCollector.json";
-        Reader reader = new FileReader(jsonPath);
-
-        JSONParser parser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) parser.parse(reader);
-        JSONObject authentication = (JSONObject) jsonObject.get("Authentication");
-
+    private JSONObject createHttpBody(AuthenticationInfo authenticationInfo) {
         JSONObject body = new JSONObject();
-        Map<String, String> jsonAuthKeyMap = Map.of("GrantType", "grant_type", "AppKey", "appkey", "SecretKey", "secretkey");
-        for (String authKey : jsonAuthKeyMap.keySet()) {
-            String authValue = authentication.get(authKey).toString();
-            body.put(jsonAuthKeyMap.get(authKey), authValue);
-        }
-
+        body.put("grant_type", authenticationInfo.getGrantType());
+        body.put("appkey", authenticationInfo.getAppKey());
+        body.put("secretkey", authenticationInfo.getSecretKey());
         return body;
     }
 }

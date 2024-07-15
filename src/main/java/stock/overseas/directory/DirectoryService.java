@@ -1,5 +1,6 @@
 package stock.overseas.directory;
 
+import stock.overseas.domain.AuthenticationInfo;
 import stock.overseas.domain.Stock;
 import stock.overseas.domain.StockFile;
 
@@ -8,7 +9,7 @@ import java.util.Map;
 
 public interface DirectoryService {
 
-    boolean getStockListFromJsonFile(List<Stock> stockListInfo);
+    boolean getInfoFromJsonFile(AuthenticationInfo authenticationInfo, List<Stock> stockListInfo);
 
     Map<String, StockFile> getStockFileMap(List<String> trKeyList);
 

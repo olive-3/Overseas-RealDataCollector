@@ -5,6 +5,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import stock.overseas.domain.AuthenticationInfo;
 import stock.overseas.domain.Stock;
 import stock.overseas.domain.StockFile;
 
@@ -28,7 +29,7 @@ public class DirectoryServiceImpl implements DirectoryService {
     /**
      * RealDataCollector.json 파일에 등록된 주식 목록 조회
      */
-    public boolean getStockListFromJsonFile(List<Stock> stockListInfo) {
+    public boolean getInfoFromJsonFile(AuthenticationInfo authenticationInfo, List<Stock> stockListInfo) {
 
         Reader reader;
         try {
