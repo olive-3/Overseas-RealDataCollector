@@ -1,48 +1,41 @@
 package stock.overseas;
 
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.parser.ParseException;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.util.StringUtils;
 import stock.overseas.directory.DirectoryServiceImpl;
 import stock.overseas.domain.AuthenticationInfo;
 import stock.overseas.domain.Stock;
 import stock.overseas.http.HttpService;
-import stock.overseas.websocket.WebSocketClient;
 
-import javax.websocket.Session;
-import java.io.IOException;
-import java.net.URI;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @EnableScheduling
 public class MainApp {
 
-    public static void main(String[] args) throws ParseException {
-
-//        List<String> trKeyList = new ArrayList<>();
-        AuthenticationInfo authenticationInfo = new AuthenticationInfo();
-        List<Stock> stockInfoList = new ArrayList<>();
+    public static void main(String[] args) {
 
         HttpService httpService = new HttpService();
         DirectoryServiceImpl directoryService = new DirectoryServiceImpl();
 
-        if(directoryService.getInfoFromJsonFile(authenticationInfo, stockInfoList) == false) {
+        AuthenticationInfo authenticationInfo = new AuthenticationInfo();
+        List<Stock> stockInfoList = new ArrayList<>();
+        if (!directoryService.getInfoFromJsonFile(authenticationInfo, stockInfoList)) {
             return;
         }
 
-        String approvalKey = httpService.getApprovalKey(authenticationInfo);
-        if(StringUtils.hasText(approvalKey) == false) {
+        String approvalKey = null;
+        try {
+            approvalKey = httpService.getApprovalKey(authenticationInfo);
+        } catch (Exception e) {
             return;
         }
 
-        //        for (Stock stock : stockInfoList) {
-//            trKeyList.add(stock.getTrKey());
-//        }
+        List<String> trKeyList = stockInfoList.stream()
+                .map(stock -> stock.getTrKey())
+                .collect(Collectors.toList());
 
         //폴더, 파일 생성
 //        directoryService.checkDirectoryExist(trKeyList);

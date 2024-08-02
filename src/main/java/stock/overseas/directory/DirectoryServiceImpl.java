@@ -61,7 +61,7 @@ public class DirectoryServiceImpl implements DirectoryService {
             }
         }
 
-        //JSON 파일에 등록된 주식 get
+        //JSON 파일에 등록된 주식 조회
         JSONObject stocks = (JSONObject) jsonObject.get("Stocks");
 
         Map<String, String> marketMap = new HashMap<>();
