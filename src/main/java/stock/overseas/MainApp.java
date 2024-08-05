@@ -11,6 +11,7 @@ import stock.overseas.http.HttpService;
 import stock.overseas.websocket.WebSocketClient;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -20,14 +21,14 @@ import java.util.List;
 @EnableScheduling
 public class MainApp {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws URISyntaxException {
 
         USStockMarketHolidayCalculator stockMarketHolidayCalculator = new USStockMarketHolidayCalculator();
         String message = stockMarketHolidayCalculator.checkWeekendOrHoliday();
         if(StringUtils.hasText(message)) {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), message);
+            return;
         }
-
 
         List<Stock> stockInfoList = new ArrayList<>();
         AuthenticationInfo authenticationInfo = new AuthenticationInfo();
@@ -37,7 +38,7 @@ public class MainApp {
         }
 
         String approvalKey = null;
-        HttpService httpService = new HttpService();
+        HttpService httpService = new HttpService(directoryService.getWebsocketAccessKeyUrl());
         try {
             approvalKey = httpService.getApprovalKey(authenticationInfo);
         } catch (Exception e) {
@@ -45,9 +46,9 @@ public class MainApp {
         }
 
         //WebSocket 연결
-        WebSocketClient webSocketClient = new WebSocketClient(approvalKey, stockInfoList);
+        WebSocketClient webSocketClient = new WebSocketClient(approvalKey, stockInfoList, new URI(directoryService.getOverseasStockQuoteUrl()));
         try {
-            webSocketClient.connect(new URI("ws://ops.koreainvestment.com:21000"));
+            webSocketClient.connect();
         } catch (Exception e) {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "프로그램 종료");
             return;

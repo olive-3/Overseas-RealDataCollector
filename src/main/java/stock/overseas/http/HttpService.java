@@ -2,7 +2,10 @@ package stock.overseas.http;
 
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
@@ -14,6 +17,12 @@ import java.time.format.DateTimeFormatter;
 
 @Slf4j
 public class HttpService {
+
+    private String websocketAccessKeyUrl;
+
+    public HttpService(String websocketAccessKeyUrl) {
+        this.websocketAccessKeyUrl = websocketAccessKeyUrl;
+    }
 
     /**
      * 실시간 (웹소켓) 접속키 발급
@@ -29,7 +38,7 @@ public class HttpService {
         HttpEntity<JSONObject> entity = new HttpEntity<>(body, headers);
 
         UriComponents uri = UriComponentsBuilder
-                .fromHttpUrl("https://openapi.koreainvestment.com:9443/oauth2/Approval")
+                .fromHttpUrl(websocketAccessKeyUrl)
                 .build();
 
         String approvalKey = null;

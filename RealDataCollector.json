@@ -136,6 +136,8 @@
     ]
   },
   "Settings": {
+    "WebsocketAccessKeyUrl": "https://openapi.koreainvestment.com:9443/oauth2/Approval",
+    "OverseasStockQuoteUrl": "ws://ops.koreainvestment.com:21000",
     "EnableDebugLog": "false",
     "AutoClosingTime": "100000"
   }

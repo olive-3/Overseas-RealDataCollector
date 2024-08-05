@@ -19,6 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class DirectoryServiceImpl implements DirectoryService {
 
+    private String websocketAccessKeyUrl;
+    private String overseasStockQuoteUrl;
     private String programPath = Paths.get("").toAbsolutePath().toString();
     private String jsonPath = programPath + File.separator + "RealDataCollector.json";
     private String realDataPath = programPath + File.separator + "RealData";
@@ -81,7 +83,18 @@ public class DirectoryServiceImpl implements DirectoryService {
             }
         }
 
+        JSONObject settings = (JSONObject) lowerJsonObject.get("settings");
+        this.websocketAccessKeyUrl = (String) settings.get("websocketaccesskeyurl");
+        this.overseasStockQuoteUrl = (String) settings.get("overseasstockquoteurl");
         return true;
+    }
+
+    public String getWebsocketAccessKeyUrl() {
+        return websocketAccessKeyUrl;
+    }
+
+    public String getOverseasStockQuoteUrl() {
+        return overseasStockQuoteUrl;
     }
 
     /**
