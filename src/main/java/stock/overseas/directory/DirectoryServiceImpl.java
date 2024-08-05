@@ -13,10 +13,7 @@ import java.io.*;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -27,7 +24,7 @@ public class DirectoryServiceImpl implements DirectoryService {
     private String realDataPath = programPath + File.separator + "RealData";
 
     /**
-     * RealDataCollector.json 파일에 등록된 주식 목록 조회
+     * RealDataCollector.json 파일에 등록된 정보 조회
      */
     public boolean getInfoFromJsonFile(AuthenticationInfo authenticationInfo, List<Stock> stockListInfo) {
 
@@ -47,35 +44,35 @@ public class DirectoryServiceImpl implements DirectoryService {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 파일 파싱 중 오류가 발생했습니다.");
             return false;
         }
+        JSONObject lowerJsonObject = convertKeysToLowerCase(jsonObject);
 
         //JSON 파일에서 인증 파트 유효성 검사
-        JSONObject authentication = (JSONObject) jsonObject.get("Authentication");
+        JSONObject authentication = (JSONObject) lowerJsonObject.get("authentication");
+        List<String> jsonAuthKeyList = Arrays.asList("granttype", "appkey", "secretkey");
 
-        List<String> jsonAuthKeyList = Arrays.asList("GrantType", "AppKey", "SecretKey");
         for (String authKey : jsonAuthKeyList) {
             String authValue = authentication.get(authKey).toString();
             if (authValue.isEmpty()) {
-                String errorMessage = "인증 관련 " + authKey + " 값이 존재 하지 않아 인증을 진행 할 수 없습니다. 해당 값을 설정 후 다시 실행해 주시기 바랍니다.";
+                String errorMessage = "인증 관련 " + authKey + "의 value 값이 존재하지 않아 인증을 진행 할 수 없습니다. 해당 값을 설정 후 다시 실행해 주시기 바랍니다.";
                 log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), errorMessage);
                 return false;
             }
         }
 
         //JSON 파일에 등록된 주식 조회
-        JSONObject stocks = (JSONObject) jsonObject.get("Stocks");
-
+        JSONObject stocks = (JSONObject) lowerJsonObject.get("stocks");
         Map<String, String> marketMap = new HashMap<>();
-        marketMap.put("NASDAQ", "NAS");
-        marketMap.put("AMEX", "AMS");
-        marketMap.put("NYSE", "NYS");
+        marketMap.put("nasdaq", "NAS");
+        marketMap.put("amex", "AMS");
+        marketMap.put("nyse", "NYS");
 
         for (String key : marketMap.keySet()) {
             Object market = stocks.get(key);
             if (market != null) {
                 JSONArray marketArray = (JSONArray) stocks.get(key);
                 for (Object arr : marketArray) {
-                    String symbol = ((JSONObject) arr).get("Symbol").toString();
-                    String stockName = ((JSONObject) arr).get("Name").toString();
+                    String symbol = ((JSONObject) arr).get("symbol").toString();
+                    String stockName = ((JSONObject) arr).get("name").toString();
                     String trKey = "D" + marketMap.get(key) + symbol;
 
                     Stock stock = new Stock(symbol, stockName, trKey);
@@ -85,6 +82,45 @@ public class DirectoryServiceImpl implements DirectoryService {
         }
 
         return true;
+    }
+
+    /**
+     *  json 파일의 모든 키를 소문자로 변환
+     */
+    private JSONObject convertKeysToLowerCase(JSONObject originalJson) {
+        JSONObject lowerJson = new JSONObject();
+        Iterator<String> keys = originalJson.keySet().iterator();
+        while(keys.hasNext()) {
+            String key = keys.next();
+            Object value = originalJson.get(key);
+
+            if (value instanceof JSONObject) {
+                lowerJson.put(key.toLowerCase(), convertKeysToLowerCase((JSONObject) value));
+            } else if (value instanceof JSONArray) {
+                lowerJson.put(key.toLowerCase(), convertArrayKeysToLowerCase((JSONArray) value));
+            }else {
+                lowerJson.put(key.toLowerCase(), value);
+            }
+        }
+
+        return lowerJson;
+    }
+
+    private JSONArray convertArrayKeysToLowerCase(JSONArray originalJsonArray) {
+        JSONArray lowerJsonArray = new JSONArray();
+
+        for (int i = 0; i < originalJsonArray.size(); i++) {
+            Object element = originalJsonArray.get(i);
+            if (element instanceof JSONObject) {
+                lowerJsonArray.add(convertKeysToLowerCase((JSONObject) element));
+            } else if (element instanceof JSONArray) {
+                lowerJsonArray.add(convertArrayKeysToLowerCase((JSONArray) element));
+            } else {
+                lowerJsonArray.add(element);
+            }
+        }
+
+        return lowerJsonArray;
     }
 
     public Map<String, StockFile> getStockFileMap(List<String> trKeyList) {
