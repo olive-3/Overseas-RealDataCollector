@@ -5,13 +5,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.util.StringUtils;
 import stock.overseas.calculator.USStockMarketHolidayCalculator;
 import stock.overseas.directory.DirectoryServiceImpl;
-import stock.overseas.domain.AuthenticationInfo;
+import stock.overseas.domain.Authentication;
+import stock.overseas.domain.Settings;
 import stock.overseas.domain.Stock;
 import stock.overseas.http.HttpService;
 import stock.overseas.websocket.WebSocketClient;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -21,7 +20,7 @@ import java.util.List;
 @EnableScheduling
 public class MainApp {
 
-    public static void main(String[] args) throws URISyntaxException {
+    public static void main(String[] args) {
 
         USStockMarketHolidayCalculator stockMarketHolidayCalculator = new USStockMarketHolidayCalculator();
         String message = stockMarketHolidayCalculator.checkWeekendOrHoliday();
@@ -30,23 +29,24 @@ public class MainApp {
             return;
         }
 
-        List<Stock> stockInfoList = new ArrayList<>();
-        AuthenticationInfo authenticationInfo = new AuthenticationInfo();
+        List<Stock> stocks = new ArrayList<>();
+        Authentication authentication = new Authentication();
+        Settings settings = new Settings();
         DirectoryServiceImpl directoryService = new DirectoryServiceImpl();
-        if (!directoryService.getInfoFromJsonFile(authenticationInfo, stockInfoList)) {
+        if (!directoryService.getInfoFromJsonFile(authentication, stocks, settings)) {
             return;
         }
 
         String approvalKey = null;
-        HttpService httpService = new HttpService(directoryService.getWebsocketAccessKeyUrl());
+        HttpService httpService = new HttpService(settings.getWebsocketAccessKeyUrl());
         try {
-            approvalKey = httpService.getApprovalKey(authenticationInfo);
+            approvalKey = httpService.getApprovalKey(authentication);
         } catch (Exception e) {
             return;
         }
 
         //WebSocket 연결
-        WebSocketClient webSocketClient = new WebSocketClient(approvalKey, stockInfoList, new URI(directoryService.getOverseasStockQuoteUrl()));
+        WebSocketClient webSocketClient = new WebSocketClient(approvalKey, stocks, settings.getOverseasStockQuoteUrl());
         try {
             webSocketClient.connect();
         } catch (Exception e) {

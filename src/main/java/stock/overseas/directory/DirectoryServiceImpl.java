@@ -5,7 +5,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import stock.overseas.domain.AuthenticationInfo;
+import org.springframework.util.StringUtils;
+import stock.overseas.domain.Authentication;
+import stock.overseas.domain.Settings;
 import stock.overseas.domain.Stock;
 import stock.overseas.domain.StockFile;
 
@@ -19,8 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class DirectoryServiceImpl implements DirectoryService {
 
-    private String websocketAccessKeyUrl;
-    private String overseasStockQuoteUrl;
     private String programPath = Paths.get("").toAbsolutePath().toString();
     private String jsonPath = programPath + File.separator + "RealDataCollector.json";
     private String realDataPath = programPath + File.separator + "RealData";
@@ -28,7 +28,7 @@ public class DirectoryServiceImpl implements DirectoryService {
     /**
      * RealDataCollector.json 파일에 등록된 정보 조회
      */
-    public boolean getInfoFromJsonFile(AuthenticationInfo authenticationInfo, List<Stock> stockListInfo) {
+    public boolean getInfoFromJsonFile(Authentication authentication, List<Stock> stocks, Settings settings) {
 
         Reader reader;
         try {
@@ -38,72 +38,141 @@ public class DirectoryServiceImpl implements DirectoryService {
             return false;
         }
 
-        JSONParser parser = new JSONParser();
         JSONObject jsonObject;
+        JSONParser parser = new JSONParser();
         try {
             jsonObject = (JSONObject) parser.parse(reader);
         } catch (IOException | ParseException e) {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 파일 파싱 중 오류가 발생했습니다.");
             return false;
         }
+
         JSONObject lowerJsonObject = convertKeysToLowerCase(jsonObject);
 
-        //JSON 파일에서 인증 파트 유효성 검사
-        JSONObject authentication = (JSONObject) lowerJsonObject.get("authentication");
-        List<String> jsonAuthKeyList = Arrays.asList("granttype", "appkey", "secretkey");
+        //인증 정보 조회
+        JSONObject authenticationObject = (JSONObject) lowerJsonObject.get("authentication");
+        if(!validateAuthentication(authenticationObject)) {
+            return false;
+        }
+        authentication.setGrantType((String) authenticationObject.get("granttype"));
+        authentication.setAppKey( (String) authenticationObject.get("appkey"));
+        authentication.setSecretKey((String) authenticationObject.get("secretkey"));
 
-        for (String authKey : jsonAuthKeyList) {
-            String authValue = authentication.get(authKey).toString();
-            if (authValue.isEmpty()) {
-                String errorMessage = "인증 관련 " + authKey + "의 value 값이 존재하지 않아 인증을 진행 할 수 없습니다. 해당 값을 설정 후 다시 실행해 주시기 바랍니다.";
-                log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), errorMessage);
+        //주식 조회
+        JSONObject stocksObject = (JSONObject) lowerJsonObject.get("stocks");
+        if (stocksObject == null || stocksObject.isEmpty()) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 설정 파일에 Stocks 키가 존재하지 않거나 값이 존재하지 않습니다.");
+            return false;
+        }
+
+        Map<String, String> stockMarketMap = createStockMarketMap();
+        for (String stockMarketKey : stockMarketMap.keySet()) {
+            JSONArray stockArray = (JSONArray) stocksObject.get(stockMarketKey);
+            if (stockArray == null) {
+                log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 설정 파일에 Stocks 객체의 " + stockMarketKey.toUpperCase() + " 키가 존재하지 않습니다.");
                 return false;
+            }
+
+            for (int i = 0; i < stockArray.size(); i++) {
+                JSONObject stockObject = (JSONObject) stockArray.get(i);
+                String symbol = (String) stockObject.get("symbol");
+                if (!StringUtils.hasText(symbol)) {
+                    log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 설정 파일에 Stocks 객체의 " + stockMarketKey.toUpperCase() + " 객체 배열에 Symbol 키가 존재하지 않거나 값이 존재하지 않습니다.");
+                    return false;
+                }
+                String name = (String) stockObject.get("name");
+                if (!StringUtils.hasText(name)) {
+                    log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 설정 파일에 Stocks 객체의 " + stockMarketKey.toUpperCase() + " 객체 배열에 Name 키가 존재하지 않거나 값이 존재하지 않습니다.");
+                    return false;
+                }
+                String trKey = "D" + stockMarketMap.get(stockMarketKey) + symbol;
+                Stock stock = new Stock(symbol, name, trKey);
+                stocks.add(stock);
             }
         }
 
-        //JSON 파일에 등록된 주식 조회
-        JSONObject stocks = (JSONObject) lowerJsonObject.get("stocks");
+        //설정 조회
+        JSONObject settingsObject = (JSONObject) lowerJsonObject.get("settings");
+        if(!validateSettings(settingsObject)) {
+            return false;
+        }
+        settings.setWebsocketAccessKeyUrl((String) settingsObject.get("websocketaccesskeyurl"));
+        settings.setOverseasStockQuoteUrl((String) settingsObject.get("overseasstockquoteurl"));
+        settings.setEnableDebugLog(Boolean.valueOf((String) settingsObject.get("enabledebuglog")));
+
+        return true;
+    }
+
+    private boolean validateAuthentication(JSONObject authenticationObject) {
+        if (authenticationObject == null || authenticationObject.isEmpty()) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 설정 파일에 Authentication 키가 존재하지 않거나 값이 존재하지 않습니다.");
+            return false;
+        }
+
+        String grantType = (String) authenticationObject.get("granttype");
+        if (!StringUtils.hasText(grantType)) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 설정 파일에 Authentication 객체의 GrantType 키가 존재하지 않거나 값이 존재하지 않습니다.");
+            return false;
+        }
+
+        String appKey = (String) authenticationObject.get("appkey");
+        if (!StringUtils.hasText(appKey)) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 설정 파일에 Authentication 객체의 AppKey 키가 존재하지 않거나 값이 존재하지 않습니다.");
+            return false;
+        }
+
+        String secretKey = (String) authenticationObject.get("secretkey");
+        if (!StringUtils.hasText(secretKey)) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 설정 파일에 Authentication 객체의 SecretKey 키가 존재하지 않거나 값이 존재하지 않습니다.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean validateSettings(JSONObject settingsObject) {
+        if (settingsObject == null || settingsObject.isEmpty()) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 설정 파일에 Settings 키가 존재하지 않거나 값이 존재하지 않습니다.");
+            return false;
+        }
+
+
+        String websocketAccessKeyUrl = (String) settingsObject.get("websocketaccesskeyurl");
+        if (!StringUtils.hasText(websocketAccessKeyUrl)) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 설정 파일에 Settings 객체의 WebsocketAccessKeyUrl 키가 존재하지 않거나 값이 존재하지 않습니다.");
+            return false;
+        }
+
+        String overseasStockQuoteUrl = (String) settingsObject.get("overseasstockquoteurl");
+        if (!StringUtils.hasText(overseasStockQuoteUrl)) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 설정 파일에 Settings 객체의 OverseasStockQuoteUrl 키가 존재하지 않거나 값이 존재하지 않습니다.");
+            return false;
+        }
+
+        String enableDebugLog = (String) settingsObject.get("enabledebuglog");
+        if (!StringUtils.hasText(enableDebugLog)) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "RealDataCollector.json 설정 파일에 Settings 객체의 EnableDebugLog 키가 존재하지 않거나 값이 존재하지 않습니다.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private Map<String, String> createStockMarketMap() {
         Map<String, String> marketMap = new HashMap<>();
         marketMap.put("nasdaq", "NAS");
         marketMap.put("amex", "AMS");
         marketMap.put("nyse", "NYS");
-
-        for (String key : marketMap.keySet()) {
-            Object market = stocks.get(key);
-            if (market != null) {
-                JSONArray marketArray = (JSONArray) stocks.get(key);
-                for (Object arr : marketArray) {
-                    String symbol = ((JSONObject) arr).get("symbol").toString();
-                    String stockName = ((JSONObject) arr).get("name").toString();
-                    String trKey = "D" + marketMap.get(key) + symbol;
-
-                    Stock stock = new Stock(symbol, stockName, trKey);
-                    stockListInfo.add(stock);
-                }
-            }
-        }
-
-        JSONObject settings = (JSONObject) lowerJsonObject.get("settings");
-        this.websocketAccessKeyUrl = (String) settings.get("websocketaccesskeyurl");
-        this.overseasStockQuoteUrl = (String) settings.get("overseasstockquoteurl");
-        return true;
-    }
-
-    public String getWebsocketAccessKeyUrl() {
-        return websocketAccessKeyUrl;
-    }
-
-    public String getOverseasStockQuoteUrl() {
-        return overseasStockQuoteUrl;
+        return marketMap;
     }
 
     /**
-     *  json 파일의 모든 키를 소문자로 변환
+     * json 파일의 모든 키를 소문자로 변환
      */
     private JSONObject convertKeysToLowerCase(JSONObject originalJson) {
         JSONObject lowerJson = new JSONObject();
         Iterator<String> keys = originalJson.keySet().iterator();
-        while(keys.hasNext()) {
+        while (keys.hasNext()) {
             String key = keys.next();
             Object value = originalJson.get(key);
 
@@ -111,7 +180,7 @@ public class DirectoryServiceImpl implements DirectoryService {
                 lowerJson.put(key.toLowerCase(), convertKeysToLowerCase((JSONObject) value));
             } else if (value instanceof JSONArray) {
                 lowerJson.put(key.toLowerCase(), convertArrayKeysToLowerCase((JSONArray) value));
-            }else {
+            } else {
                 lowerJson.put(key.toLowerCase(), value);
             }
         }
@@ -215,17 +284,5 @@ public class DirectoryServiceImpl implements DirectoryService {
         String filePath = realDataPath + File.separator + key + File.separator + key + "_" + date + ".txt";
 
         return filePath;
-    }
-
-    public boolean isEnableDebugLog() throws IOException, ParseException {
-
-        Reader reader = new FileReader(jsonPath);
-
-        JSONParser parser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) parser.parse(reader);
-        JSONObject settings = (JSONObject) jsonObject.get("Settings");
-
-        Boolean enableDebugLog = Boolean.valueOf(settings.get("EnableDebugLog").toString().toLowerCase());
-        return enableDebugLog;
     }
 }

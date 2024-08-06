@@ -10,7 +10,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
-import stock.overseas.domain.AuthenticationInfo;
+import stock.overseas.domain.Authentication;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -27,14 +27,14 @@ public class HttpService {
     /**
      * 실시간 (웹소켓) 접속키 발급
      */
-    public String getApprovalKey(AuthenticationInfo authenticationInfo) {
+    public String getApprovalKey(Authentication authentication) {
 
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        JSONObject body = createHttpBody(authenticationInfo);
+        JSONObject body = createHttpBody(authentication);
         HttpEntity<JSONObject> entity = new HttpEntity<>(body, headers);
 
         UriComponents uri = UriComponentsBuilder
@@ -57,11 +57,11 @@ public class HttpService {
            return approvalKey;
     }
 
-    private JSONObject createHttpBody(AuthenticationInfo authenticationInfo) {
+    private JSONObject createHttpBody(Authentication authentication) {
         JSONObject body = new JSONObject();
-        body.put("grant_type", authenticationInfo.getGrantType());
-        body.put("appkey", authenticationInfo.getAppKey());
-        body.put("secretkey", authenticationInfo.getSecretKey());
+        body.put("grant_type", authentication.getGrantType());
+        body.put("appkey", authentication.getAppKey());
+        body.put("secretkey", authentication.getSecretKey());
         return body;
     }
 }

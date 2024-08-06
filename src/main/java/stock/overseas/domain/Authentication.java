@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class AuthenticationInfo {
+public class Authentication {
 
     private String appKey;
     private String secretKey;
