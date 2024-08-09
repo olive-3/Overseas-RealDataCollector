@@ -9,21 +9,25 @@ import org.springframework.util.StringUtils;
 import stock.overseas.domain.Authentication;
 import stock.overseas.domain.Settings;
 import stock.overseas.domain.Stock;
-import stock.overseas.domain.StockFile;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class DirectoryServiceImpl implements DirectoryService {
 
     private String programPath = Paths.get("").toAbsolutePath().toString();
     private String jsonPath = programPath + File.separator + "RealDataCollector.json";
-    private String realDataPath = programPath + File.separator + "RealData";
 
     /**
      * RealDataCollector.json 파일에 등록된 정보 조회
@@ -51,11 +55,11 @@ public class DirectoryServiceImpl implements DirectoryService {
 
         //인증 정보 조회
         JSONObject authenticationObject = (JSONObject) lowerJsonObject.get("authentication");
-        if(!validateAuthentication(authenticationObject)) {
+        if (!validateAuthentication(authenticationObject)) {
             return false;
         }
         authentication.setGrantType((String) authenticationObject.get("granttype"));
-        authentication.setAppKey( (String) authenticationObject.get("appkey"));
+        authentication.setAppKey((String) authenticationObject.get("appkey"));
         authentication.setSecretKey((String) authenticationObject.get("secretkey"));
 
         //주식 조회
@@ -93,7 +97,7 @@ public class DirectoryServiceImpl implements DirectoryService {
 
         //설정 조회
         JSONObject settingsObject = (JSONObject) lowerJsonObject.get("settings");
-        if(!validateSettings(settingsObject)) {
+        if (!validateSettings(settingsObject)) {
             return false;
         }
         settings.setWebsocketAccessKeyUrl((String) settingsObject.get("websocketaccesskeyurl"));
@@ -205,84 +209,32 @@ public class DirectoryServiceImpl implements DirectoryService {
         return lowerJsonArray;
     }
 
-    public Map<String, StockFile> getStockFileMap(List<String> trKeyList) {
-
-        Map<String, StockFile> stockFiles = new ConcurrentHashMap<>();
-
-        for (String trKey : trKeyList) {
-
-            String stockName = trKey.substring(4);
-            String path = getPath(stockName);
-            File file = new File(path);
-
-            if (!file.exists()) {
-                try {
-                    file.createNewFile();
-                } catch (IOException e) {
-                    log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "txt 파일 작성 중 오류 발생");
-                }
-            }
-
-            StockFile stockFile = new StockFile(stockName, file, 0L);
-            stockFiles.put(trKey, stockFile);
-        }
-
-        return stockFiles;
-    }
-
-    /*
-     * RealData/주식명 디렉토리 존재 유무 -> 존재하지 않는 경우, 생성
+    /**
+     * RealData/ticker/yyyy/ticker_yyMMdd.txt 존재하지 않는 경우, 생성
+     * <p>
+     * 해외 주식 실시간지연체결가 로그 파일명은 미국 날짜 기준으로 새성됩니다.
      */
-    public void checkDirectoryExist(List<String> trKeyList) {
+    @Override
+    public void stockRealDataLogFileExists(String ticker) {
 
-        makeRealDataDirectory();
-        for (String trKey : trKeyList) {
-            makeTickerDirectory(trKey);
-        }
-    }
+        ZoneId americaZoneId = ZoneId.of("America/New_York");
+        LocalDate now = LocalDate.now(americaZoneId);
 
-    private void makeRealDataDirectory() {
+        Path folderPath = Paths.get(programPath + File.separator + "RealData" + File.separator + ticker + File.separator + now.getYear());
+        Path filePath = folderPath.resolve(ticker + "_" + DateTimeFormatter.ofPattern("yyyyMMdd").format(now));
 
-        File folder = new File(realDataPath);
-
-        if (!folder.exists()) {
-            folder.mkdir();
-        }
-    }
-
-    private void makeTickerDirectory(String trKey) {
-
-        String stockName = trKey.substring(4);
-        String pathTicker = realDataPath + File.separator + stockName;
-        File folder = new File(pathTicker);
-
-        if (!folder.exists()) {
-            folder.mkdirs();
-        }
-    }
-
-    public void makeFiles(List<String> trKeyList) {
-
-        for (String trKey : trKeyList) {
-            String stockName = trKey.substring(4);
-            String path = getPath(stockName);
-            File file = new File(path);
-
-            if (!file.exists()) {
-                try {
-                    file.createNewFile();
-                } catch (IOException e) {
-                    log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "파일 생성 중 오류 발생");
-                }
+        try {
+            //RealData/ticker/yyyy 폴더 생성
+            if (!Files.exists(folderPath)) {
+                Files.createDirectories(folderPath);
             }
+
+            //해외 주식 실시간지연체결가 로그.txt 파일 생성
+            if (!Files.exists(filePath)) {
+                Files.createFile(filePath);
+            }
+        } catch (IOException e) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "해외 주식 실시간 지연 체결가 로그 파일 폴더 생성 중 오류가 발생했습니다.");
         }
-    }
-
-    private String getPath(String key) {
-
-        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String filePath = realDataPath + File.separator + key + File.separator + key + "_" + date + ".txt";
-
-        return filePath;
     }
 }

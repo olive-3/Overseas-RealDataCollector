@@ -6,6 +6,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import stock.overseas.directory.DirectoryServiceImpl;
 import stock.overseas.domain.StockFile;
+import stock.overseas.exception.CustomWebsocketException;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -23,35 +24,33 @@ import java.util.Map;
 public class MessageHandler {
 
     private int count;
-    private int totalCount;
+    private int totalStockCount;
     private boolean enableDebugLog;
-    private DirectoryServiceImpl directoryService = new DirectoryServiceImpl();
+    private DirectoryServiceImpl directoryService;
     private Map<String, StockFile> stockFiles = new HashMap<>();
-    private List<String> trKeyList = new ArrayList<>();
 
     private String programPath = Paths.get("").toAbsolutePath().toString();
     private String filePath = programPath + File.separator + "Log.txt";
 
-    public MessageHandler(List<String> trKeyList) throws IOException, ParseException {
-        this.trKeyList = trKeyList;
+    public MessageHandler(List<String> trKeyList) {
         this.count = 0;
-        this.totalCount = trKeyList.size();
-        this.stockFiles = directoryService.getStockFileMap(trKeyList);
-        this.enableDebugLog = directoryService.isEnableDebugLog();
-
+        this.totalStockCount = trKeyList.size();
+        this.directoryService = new DirectoryServiceImpl();
+/*        this.enableDebugLog = directoryService.isEnableDebugLog();
         if(enableDebugLog) {
             File file = new File(filePath);
             file.createNewFile();
-        }
+        }*/
     }
 
     public void handleMessage(String message) throws ParseException, IOException {
 
         //전체 로그 기록
-        if(enableDebugLog) {
-            writeMessage(message);
-        }
+//        if(enableDebugLog) {
+//            writeMessage(message);
+//        }
 
+        System.out.println("message = " + message);
         //PINGPONG 메세지
         if (message.contains("PINGPONG")) {
             return;
@@ -62,40 +61,44 @@ public class MessageHandler {
             JSONParser parser = new JSONParser();
             JSONObject jsonObject = (JSONObject) parser.parse(message);
             JSONObject body  = (JSONObject) jsonObject.get("body");
-            String responseMessage = body.get("msg1").toString();
+            String responseCode = body.get("msg_cd").toString();
 
-            if(("SUBSCRIBE SUCCESS").equals(responseMessage)) {
+            //OPSP0000: SUBSCRIBE SUCCESS
+            if(("OPSP0000").equals(responseCode)) {
                 JSONObject header  = (JSONObject) jsonObject.get("header");
                 String symbol = header.get("tr_key").toString().substring(4);
                 log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "[" + symbol + "] => 등록 성공");
                 count++;
 
                 //Subscribe 모두 성공
-                if(count == totalCount) {
-                    String completeMessage = "총 " + totalCount + " 종목 실시간 체결 데이터 등록 완료";
-                    log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), completeMessage);
+                if(count == totalStockCount) {
+                    log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "총 " + totalStockCount + " 종목 실시간 체결 데이터 등록 완료");
                 }
-
                 return;
             } else {
-                throw new IllegalArgumentException(responseMessage);
+                String errorMessage = body.get("msg1").toString();
+                throw new CustomWebsocketException(errorMessage);
             }
         }
 
         //정상 데이터
         String[] getData = message.split("\\|");
-        int dataNum = Integer.parseInt(getData[2]); //2
+        int dataNum = Integer.parseInt(getData[2]);
         String trKey = getData[3].split("\\^")[0];
+        String ticker = trKey.substring(4);
 
-        if(dataNum == 1) {
-            write(trKey, getData[3]);
-        }
-        else {
-            String[] stockDataList = getData[3].split(trKey);
-            for(int i = 1; i < stockDataList.length; i++) {
-                write(trKey, trKey + stockDataList[i]);
-            }
-        }
+        //폴더, 파일 존재하는지 확인
+        directoryService.stockRealDataLogFileExists(ticker);
+
+//        if(dataNum == 1) {
+//            write(trKey, getData[3]);
+//        }
+//        else {
+//            String[] stockDataList = getData[3].split(trKey);
+//            for(int i = 1; i < stockDataList.length; i++) {
+//                write(trKey, trKey + stockDataList[i]);
+//            }
+//        }
     }
 
     private void write(String trKey, String stockDataString) throws IOException {
