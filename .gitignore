@@ -36,5 +36,6 @@ out/
 ### VS Code ###
 .vscode/
 
-/RealData
-/Message.txt
+/RealData/
+/Log/
+/RealDataCollector.json
