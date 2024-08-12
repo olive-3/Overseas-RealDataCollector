@@ -2,45 +2,64 @@ package stock.overseas.websocket;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.parser.ParseException;
 import stock.overseas.domain.Stock;
+import stock.overseas.exception.CustomWebsocketException;
 
 import javax.websocket.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Timer;
+import java.util.stream.Collectors;
 
 @Slf4j
 @ClientEndpoint
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WebSocketClient {
 
     private String approvalKey;
     private List<Stock> stockInfoList;
-    List<String> trKeyList = new ArrayList<>();
-
-    private Session userSession = null;
+    private List<String> trKeyList;
+    private URI endpointURI;
+    private Session userSession;
     private MessageHandler messageHandler;
+    private Timer timer;
+    private boolean enableDebugLog;
 
-    public WebSocketClient(String approvalKey, List<Stock> stockInfoList, List<String> trKeyList) {
+    private volatile boolean running = true;
+    private static final long KEEP_ALIVE_INTERVAL_MS = 10000; // 100초
+
+    public WebSocketClient(String approvalKey, List<Stock> stockInfoList, String overseasStockQuoteUrl, boolean enableDebugLog) {
         this.approvalKey = approvalKey;
         this.stockInfoList = stockInfoList;
-        this.trKeyList = trKeyList;
+        this.trKeyList = stockInfoList.stream()
+                .map(stock -> stock.getTrKey())
+                .collect(Collectors.toList());
+        try {
+            this.endpointURI = new URI(overseasStockQuoteUrl);
+        } catch (URISyntaxException e) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "해외주식 실시간 지연 체결가 도메인을 확인해 주세요.");
+            throw new RuntimeException();
+        }
+        this.enableDebugLog = enableDebugLog;
+        this.timer = new Timer();
     }
 
-    public void connect(URI endpointURI) throws DeploymentException, IOException {
+    public void connect() {
+        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
         try {
-            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             container.connectToServer(this, endpointURI);
         } catch (DeploymentException | IOException e) {
-            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 연결 중 문제가 발생하였습니다.");
-            throw e;
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 연결 중 문제가 발생했습니다.");
+            throw new RuntimeException(e);
         }
     }
 
@@ -50,15 +69,19 @@ public class WebSocketClient {
      * @param userSession the userSession which is opened.
      */
     @OnOpen
-    public void onOpen(Session userSession) throws InterruptedException, IOException, ParseException {
+    public void onOpen(Session userSession) throws InterruptedException {
         this.userSession = userSession;
         log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 연결 => 성공");
 
-        // add listener
-        this.messageHandler = new MessageHandler(trKeyList);
+        addMessageHandler(new MessageHandler(trKeyList, enableDebugLog));
 
-        //send message to websocket
-        subscribeStocks();
+        //서버로 메세지 전송
+        for (Stock stock : stockInfoList) {
+            sendMessage(createSendMessage(stock.getTrKey()));
+            Thread.sleep(500);
+        }
+
+//        startPing();
     }
 
     /**
@@ -68,14 +91,15 @@ public class WebSocketClient {
      * @param reason the reason for connection close
      */
     @OnClose
-    public void onClose(Session userSession, CloseReason reason) throws URISyntaxException, DeploymentException, IOException {
+    public void onClose(Session userSession, CloseReason reason) {
         this.userSession = null;
+//        stopPing();
         log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), reason.getReasonPhrase());
         log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 닫힘 => 성공");
 
-        //재접속
-        log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 재접속");
-        connect(new URI("ws://ops.koreainvestment.com:21000"));
+        //재접속 시도
+        log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 재접속 시도");
+        connect();
     }
 
     /**
@@ -85,12 +109,11 @@ public class WebSocketClient {
      */
     @OnMessage
     public void onMessage(String message) throws IOException, ParseException {
-
         try {
             if (this.messageHandler != null) {
                 this.messageHandler.handleMessage(message);
             }
-        } catch (IllegalArgumentException e) {
+        } catch (CustomWebsocketException e) {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), e.getMessage());
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "프로그램 종료");
             System.exit(-1);
@@ -102,34 +125,18 @@ public class WebSocketClient {
         }
     }
 
-    @OnMessage
-    public void onMessage(ByteBuffer bytes) {
-        System.out.println("Handle byte buffer");
-    }
-
     /**
      * Send a message.
      *
      * @param message
      */
     public void sendMessage(String message) {
-        this.userSession.getAsyncRemote().sendText(message);
-    }
-
-    /**
-     * Send a pong.
-     *
-     * {"header":{"tr_id":"PINGPONG"}}
-     */
-    public void sendPong() throws IOException {
-        HashMap<String, Object> jsonHeader = new HashMap<>();
-        jsonHeader.put("tr_id", "PINGPONG");
-
-        HashMap<String, Object> json = new HashMap<>();
-        json.put("header", jsonHeader);
-
-        String msg = new ObjectMapper().writeValueAsString(json);
-        this.userSession.getAsyncRemote().sendPong(ByteBuffer.wrap((msg).getBytes("UTF-8")));
+        try {
+            this.userSession.getBasicRemote().sendText(message);
+        } catch (IOException e) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 메세지 전송 중 문제가 발생했습니다.");
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -141,19 +148,8 @@ public class WebSocketClient {
         this.messageHandler = messageHandler;
     }
 
-    public Session getUserSession() {
-        return userSession;
-    }
-
-    public void subscribeStocks() throws InterruptedException {
-        for (Stock stock : stockInfoList) {
-            sendMessage(createSendMessage(approvalKey, stock.getTrKey()));
-            Thread.sleep(500);
-        }
-    }
-
     //"{"header": {"tr_type":"1", "approval_key":" + approvalKey + ", "custtype":""}, "body": {"input": {"tr_id":"", "tr_key":" + trKey + "}}}
-    private String createSendMessage(String approvalKey, String trKey) {
+    private String createSendMessage(String trKey) {
 
         //json header
         HashMap<String, Object> jsonHeader = new HashMap<>();
@@ -176,12 +172,39 @@ public class WebSocketClient {
         json.put("body", jsonBody);
 
         String sendJson = null;
+        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            sendJson = new ObjectMapper().writeValueAsString(json);
+            sendJson = objectMapper.writeValueAsString(json);
         } catch (JsonProcessingException e) {
-            log.info("{}", e.getMessage());
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "해외 주식 실시간지연체결가 HTTP 요청 메세지 생성 중 오류가 발생했습니다.");
+            throw new RuntimeException();
         }
 
         return sendJson;
     }
+
+//    private void startPing() {
+//        running = true;
+//        timer.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                if(running) {
+//                    try {
+//                        System.out.println("WebSocketClient.run");
+//                        userSession.getBasicRemote().sendPing(ByteBuffer.allocate(0));
+//                    } catch (IOException e) {
+//                        log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "웹소켓 연결 유지를 위한 Ping 메세지 전송 중 오류가 발생했습니다.");
+//                        return;
+//                    }
+//                }
+//            }
+//        }, 0, KEEP_ALIVE_INTERVAL_MS); //100초
+//    }
+//
+//    private void stopPing() {
+//        if (timer != null) {
+//            timer.cancel();
+//            running = false;
+//        }
+//    }
 }

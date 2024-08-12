@@ -20,7 +20,7 @@ import java.util.List;
 @EnableScheduling
 public class MainApp {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
         USStockMarketHolidayCalculator stockMarketHolidayCalculator = new USStockMarketHolidayCalculator();
         String message = stockMarketHolidayCalculator.checkWeekendOrHoliday();
@@ -37,6 +37,7 @@ public class MainApp {
             return;
         }
 
+        //웹소켓 접속키 발급
         String approvalKey = null;
         HttpService httpService = new HttpService(settings.getWebsocketAccessKeyUrl());
         try {
@@ -46,25 +47,17 @@ public class MainApp {
         }
 
         //WebSocket 연결
-        WebSocketClient webSocketClient = new WebSocketClient(approvalKey, stocks, settings.getOverseasStockQuoteUrl());
+        WebSocketClient webSocketClient;
         try {
+            webSocketClient = new WebSocketClient(approvalKey, stocks, settings.getOverseasStockQuoteUrl(), settings.getEnableDebugLog());
             webSocketClient.connect();
         } catch (Exception e) {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "프로그램 종료");
             return;
         }
 
-//        while(true) {
-//            try {
-//                Session session = webSocketClient.getUserSession();
-//                if (session != null) {
-//                    webSocketClient.sendPong();
-//                }
-//
-//                Thread.sleep(100000);   //100초
-//            } catch (Exception e) {
-//                log.info("{}", e.getMessage());
-//            }
-//        }
+        while(true) {
+            Thread.sleep(100000000);
+        }
     }
 }
