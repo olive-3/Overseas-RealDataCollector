@@ -48,10 +48,12 @@ public class HttpService {
                 JSONObject json = response.getBody();
                 approvalKey = (String) json.get("approval_key");
                 log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "웹소켓 토큰 발급 => 성공");
+            } else {
+                log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "웹소켓 토큰 발급 => 실패 " + response.getStatusCode());
             }
         } catch (HttpClientErrorException e) {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "웹소켓 토큰 발급 => 실패 " + e.getStatusCode());
-            throw new RuntimeException();
+            throw e;
         }
 
            return approvalKey;
