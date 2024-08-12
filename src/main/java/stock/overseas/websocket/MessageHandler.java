@@ -28,25 +28,22 @@ public class MessageHandler {
     private Map<String, StockFile> stockFiles = new HashMap<>();
 
     private String programPath = Paths.get("").toAbsolutePath().toString();
-    private String filePath = programPath + File.separator + "Log.txt";
 
-    public MessageHandler(List<String> trKeyList) {
+    public MessageHandler(List<String> trKeyList, boolean enableDebugLog) {
         this.count = 0;
         this.totalStockCount = trKeyList.size();
         this.directoryService = new DirectoryServiceImpl();
-/*        this.enableDebugLog = directoryService.isEnableDebugLog();
-        if(enableDebugLog) {
-            File file = new File(filePath);
-            file.createNewFile();
-        }*/
+        this.enableDebugLog = enableDebugLog;
+        if (enableDebugLog) {
+            directoryService.logFileExists();
+        }
     }
 
     public void handleMessage(String message) throws ParseException, IOException {
-
         //전체 로그 기록
-//        if(enableDebugLog) {
-//            writeMessage(message);
-//        }
+        if (enableDebugLog) {
+            writeMessage(message);
+        }
 
         //PINGPONG 메세지
         if (message.contains("PINGPONG")) {
@@ -97,12 +94,10 @@ public class MessageHandler {
     }
 
     private void write(String ticker, String stockDataString) throws IOException {
-
         ZoneId americaZoneId = ZoneId.of("America/New_York");
         LocalDate now = LocalDate.now(americaZoneId);
-
         String folderPath = programPath + File.separator + "RealData" + File.separator + ticker + File.separator + now.getYear();
-        String filePath = folderPath + File.separator + ticker + "_" + DateTimeFormatter.ofPattern("yyyyMMdd").format(now);
+        String filePath = folderPath + File.separator + ticker + "_" + DateTimeFormatter.ofPattern("yyyyMMdd").format(now) + ".txt";
         File file = new File(filePath);
 
         long sequence = getLastSequence(filePath) + 1;
@@ -159,19 +154,22 @@ public class MessageHandler {
         return Long.parseLong(lastSequence);
     }
 
-//    private void writeMessage(String message) throws IOException {
-//
-//        FileWriter fw = null;
-//        BufferedWriter writer = null;
-//        try {
-//            fw = new FileWriter(filePath, true);
-//            writer = new BufferedWriter(fw);
-//            writer.write(message);
-//            writer.newLine();
-//        } catch (IOException e) {
-//            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "메세지 파일 작성 중 오류 발생");
-//        } finally {
-//            writer.close();
-//        }
-//    }
+    private void writeMessage(String message) throws IOException {
+        ZoneId americaZoneId = ZoneId.of("America/New_York");
+        LocalDate now = LocalDate.now(americaZoneId);
+        String filePath = programPath + File.separator + "Log" + File.separator + DateTimeFormatter.ofPattern("yyyyMMdd").format(now) + ".txt";
+
+        FileWriter fw = null;
+        BufferedWriter writer = null;
+        try {
+            fw = new FileWriter(filePath, true);
+            writer = new BufferedWriter(fw);
+            writer.write(message);
+            writer.newLine();
+        } catch (IOException e) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "메세지 파일 작성 중 오류 발생");
+        } finally {
+            writer.close();
+        }
+    }
 }

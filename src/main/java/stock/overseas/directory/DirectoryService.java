@@ -10,5 +10,7 @@ public interface DirectoryService {
 
     boolean getInfoFromJsonFile(Authentication authentication, List<Stock> stocks, Settings settings);
 
-     void stockRealDataLogFileExists(String ticker);
+    void stockRealDataLogFileExists(String ticker);
+
+    void logFileExists();
 }

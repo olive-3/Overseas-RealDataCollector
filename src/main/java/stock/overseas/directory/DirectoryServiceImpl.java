@@ -211,7 +211,7 @@ public class DirectoryServiceImpl implements DirectoryService {
 
     /**
      * RealData/ticker/yyyy/ticker_yyMMdd.txt 존재하지 않는 경우, 생성
-     * <p>
+     *
      * 해외 주식 실시간지연체결가 로그 파일명은 미국 날짜 기준으로 새성됩니다.
      */
     @Override
@@ -219,9 +219,8 @@ public class DirectoryServiceImpl implements DirectoryService {
 
         ZoneId americaZoneId = ZoneId.of("America/New_York");
         LocalDate now = LocalDate.now(americaZoneId);
-
         Path folderPath = Paths.get(programPath + File.separator + "RealData" + File.separator + ticker + File.separator + now.getYear());
-        Path filePath = folderPath.resolve(ticker + "_" + DateTimeFormatter.ofPattern("yyyyMMdd").format(now));
+        Path filePath = folderPath.resolve(ticker + "_" + DateTimeFormatter.ofPattern("yyyyMMdd").format(now) + ".txt");
 
         try {
             //RealData/ticker/yyyy 폴더 생성
@@ -235,6 +234,34 @@ public class DirectoryServiceImpl implements DirectoryService {
             }
         } catch (IOException e) {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "해외 주식 실시간 지연 체결가 로그 파일 폴더 생성 중 오류가 발생했습니다.");
+        }
+    }
+
+    /**
+     * Log/ticker/yyMMdd.txt 존재하지 않는 경우, 생성
+     *
+     * 전체 로그 파일명은 미국 날짜 기준으로 새성됩니다.
+     */
+    @Override
+    public void logFileExists() {
+        ZoneId americaZoneId = ZoneId.of("America/New_York");
+        LocalDate now = LocalDate.now(americaZoneId);
+
+        Path folderPath = Paths.get(programPath + File.separator + "Log");
+        Path filePath = folderPath.resolve( DateTimeFormatter.ofPattern("yyyyMMdd").format(now) + ".txt");
+
+        //Log 폴더 생성
+        try {
+            if (!Files.exists(folderPath)) {
+                Files.createDirectory(folderPath);
+            }
+
+            //전체 로그.txt 파일 생성
+            if (!Files.exists(filePath)) {
+                Files.createFile(filePath);
+            }
+        } catch (IOException e) {
+            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "전체 로그 파일 폴더 생성 중 오류가 발생했습니다.");
         }
     }
 }
