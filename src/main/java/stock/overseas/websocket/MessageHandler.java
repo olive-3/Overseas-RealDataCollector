@@ -5,7 +5,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import stock.overseas.directory.DirectoryServiceImpl;
-import stock.overseas.domain.StockFile;
 import stock.overseas.exception.CustomWebsocketException;
 
 import java.io.*;
@@ -14,9 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 public class MessageHandler {
@@ -25,7 +22,6 @@ public class MessageHandler {
     private int totalStockCount;
     private boolean enableDebugLog;
     private DirectoryServiceImpl directoryService;
-    private Map<String, StockFile> stockFiles = new HashMap<>();
 
     private String programPath = Paths.get("").toAbsolutePath().toString();
 
