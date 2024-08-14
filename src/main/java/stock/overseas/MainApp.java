@@ -9,7 +9,7 @@ import stock.overseas.domain.Authentication;
 import stock.overseas.domain.Settings;
 import stock.overseas.domain.Stock;
 import stock.overseas.http.HttpService;
-import stock.overseas.schedule.ScheduleService;
+import stock.overseas.schedule.ShutdownService;
 import stock.overseas.websocket.WebSocketClient;
 
 import java.time.LocalDateTime;
@@ -57,7 +57,7 @@ public class MainApp {
             return;
         }
 
-        ScheduleService scheduleService = new ScheduleService();
-        scheduleService.closeProgram();
+        ShutdownService shutdownService = new ShutdownService();
+        shutdownService.closeProgram();
     }
 }
