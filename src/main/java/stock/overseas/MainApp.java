@@ -1,7 +1,6 @@
 package stock.overseas;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.util.StringUtils;
 import stock.overseas.calculator.USStockMarketHolidayCalculator;
 import stock.overseas.directory.DirectoryServiceImpl;
@@ -12,21 +11,18 @@ import stock.overseas.http.HttpService;
 import stock.overseas.schedule.ShutdownService;
 import stock.overseas.websocket.WebSocketClient;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-@EnableScheduling
 public class MainApp {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
 
         USStockMarketHolidayCalculator stockMarketHolidayCalculator = new USStockMarketHolidayCalculator();
         String message = stockMarketHolidayCalculator.checkWeekendOrHoliday();
         if(StringUtils.hasText(message)) {
-            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), message);
+            log.info(message);
             return;
         }
 
@@ -44,6 +40,7 @@ public class MainApp {
         try {
             approvalKey = httpService.getApprovalKey(authentication);
         } catch (Exception e) {
+            log.info("프로그램이 종료되었습니다.");
             return;
         }
 
@@ -53,7 +50,7 @@ public class MainApp {
             webSocketClient = new WebSocketClient(approvalKey, stocks, settings.getOverseasStockQuoteUrl(), settings.getEnableDebugLog());
             webSocketClient.connect();
         } catch (Exception e) {
-            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "프로그램 종료");
+            log.info("프로그램이 종료되었습니다");
             return;
         }
 

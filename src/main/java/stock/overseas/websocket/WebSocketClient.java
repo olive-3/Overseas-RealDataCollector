@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.parser.ParseException;
 import stock.overseas.domain.Stock;
 import stock.overseas.exception.CustomWebsocketException;
 
@@ -57,8 +56,8 @@ public class WebSocketClient {
         try {
             return new URI(url);
         } catch (URISyntaxException e) {
-            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "해외주식 실시간 지연 체결가 도메인을 확인해 주세요.");
-            throw new RuntimeException(e);
+            log.error("해외주식 실시간 지연 체결가 URL을 확인해 주세요.");
+            throw new RuntimeException();
         }
     }
 
@@ -66,9 +65,11 @@ public class WebSocketClient {
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
         try {
             container.connectToServer(this, endpointURI);
-        } catch (DeploymentException | IOException e) {
-            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 연결 중 문제가 발생했습니다.");
+        } catch (DeploymentException e) {
+            log.error("해외주식 실시간 지연 체결가 URL을 확인해 주세요.");
             throw new RuntimeException(e);
+        } catch (IOException e) {
+            log.info("WebSocket 연결 중 문제가 발생했습니다.");
         }
     }
 
@@ -80,7 +81,7 @@ public class WebSocketClient {
     @OnOpen
     public void onOpen(Session userSession) throws InterruptedException {
         this.userSession = userSession;
-        log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 연결 => 성공");
+        log.info("WebSocket 연결 => 성공");
 
         addMessageHandler(new MessageHandler(trKeyList, enableDebugLog));
 
@@ -102,12 +103,11 @@ public class WebSocketClient {
     @OnClose
     public void onClose(Session userSession, CloseReason reason) {
         this.userSession = null;
-        log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), reason.getReasonPhrase());
-        log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 닫힘 => 성공");
+        log.info("[" + reason.getReasonPhrase() + "] WebSocket 닫힘");
         stopHeartBeat();
 
         //재접속 시도
-        log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 재접속 시도");
+        log.info("WebSocket 재접속 시도");
         connect();
     }
 
@@ -117,19 +117,23 @@ public class WebSocketClient {
      * @param message The text message
      */
     @OnMessage
-    public void onMessage(String message) throws IOException, ParseException {
+    public void onMessage(String message) {
         try {
             if (this.messageHandler != null) {
                 this.messageHandler.handleMessage(message);
             }
         } catch (CustomWebsocketException e) {
             log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), e.getMessage());
-            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "프로그램 종료");
+            log.info("프로그램이 종료되었습니다.");
             System.exit(-1);
         } catch (RuntimeException e) {
             if (userSession != null) {
                 CloseReason closeReason = new CloseReason(CloseReason.CloseCodes.UNEXPECTED_CONDITION, e.getMessage());
-                userSession.close(closeReason);
+                try {
+                    userSession.close(closeReason);
+                } catch (IOException ex) {
+                    log.warn("웹소켓 연결 종료 중 오류가 발생했습니다.");
+                }
             }
         }
     }
@@ -140,12 +144,7 @@ public class WebSocketClient {
      * @param message
      */
     public void sendMessage(String message) {
-        try {
-            this.userSession.getBasicRemote().sendText(message);
-        } catch (IOException e) {
-            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "WebSocket 메세지 전송 중 문제가 발생했습니다.");
-            throw new RuntimeException(e);
-        }
+        this.userSession.getAsyncRemote().sendText(message);
     }
 
     /**
@@ -167,13 +166,8 @@ public class WebSocketClient {
             @Override
             public void run() {
                 if (running) {
-                    try {
-                        if (userSession != null && userSession.isOpen()) {
-                            sendMessage(createPingPongMessage());
-                        }
-                    } catch (Exception e) {
-                        log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "웹소켓 연결 유지를 위한 PingPong 메세지 전송 중 오류가 발생했습니다.");
-                        return;
+                    if (userSession != null && userSession.isOpen()) {
+                        sendMessage(createPingPongMessage());
                     }
                 }
             }
@@ -206,8 +200,8 @@ public class WebSocketClient {
         try {
             sendJson = objectMapper.writeValueAsString(json);
         } catch (JsonProcessingException e) {
-            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "해외 주식 실시간지연체결가 HTTP 요청 메세지 생성 중 오류가 발생했습니다.");
-            throw new RuntimeException();
+            log.error("해외 주식 실시간 지연 체결가 Subscribe 메세지 생성 중 오류가 발생했습니다.");
+            throw new RuntimeException(e);
         }
 
         return sendJson;
@@ -228,8 +222,8 @@ public class WebSocketClient {
         try {
             sendJson = objectMapper.writeValueAsString(json);
         } catch (JsonProcessingException e) {
-            log.info("[{}] {}", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()), "해외 주식 실시간지연체결가 PINGPONG 메세지 생성 중 오류가 발생했습니다.");
-            throw new RuntimeException();
+            log.error("WebSocket PINGPONG 메세지 생성 중 오류가 발생했습니다.");
+            throw new RuntimeException(e);
         }
 
         return sendJson;
