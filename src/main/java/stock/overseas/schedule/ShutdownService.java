@@ -27,7 +27,7 @@ public class ShutdownService {
                 int currentMinute = now.get(Calendar.MINUTE);
 
                 if (currentHour == closingTime.getHour() && currentMinute == closingTime.getMinute()) {
-                    log.info("미국 증시가 종료되는 시간입니다. 프로그램을 종료합니다.");
+                    log.info("설정된 종료 시간이므로 프로그램을 종료합니다.");
                     System.exit(0);
                 }
             }
