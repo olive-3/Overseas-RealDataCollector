@@ -15,8 +15,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -101,6 +103,8 @@ public class DirectoryServiceImpl implements DirectoryService {
         settings.setWebsocketAccessKeyUrl((String) settingsObject.get("websocketaccesskeyurl"));
         settings.setOverseasStockQuoteUrl((String) settingsObject.get("overseasstockquoteurl"));
         settings.setEnableDebugLog(Boolean.valueOf((String) settingsObject.get("enabledebuglog")));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmm");
+        settings.setAutoClosingTime(LocalTime.parse((String) settingsObject.get("autoclosingtime"), formatter));
 
         return true;
     }
@@ -153,6 +157,19 @@ public class DirectoryServiceImpl implements DirectoryService {
         String enableDebugLog = (String) settingsObject.get("enabledebuglog");
         if (!StringUtils.hasText(enableDebugLog)) {
             log.error("RealDataCollector.json 설정 파일에 Settings 객체의 EnableDebugLog 키가 존재하지 않거나 값이 존재하지 않습니다.");
+            return false;
+        }
+
+        String autoClosingTimeString = (String) settingsObject.get("autoclosingtime");
+        if (!StringUtils.hasText(autoClosingTimeString)) {
+            log.error("RealDataCollector.json 설정 파일에 Settings 객체의 AutoClosingTime 키가 존재하지 않거나 값이 존재하지 않습니다.");
+            return false;
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmm");
+        try {
+            LocalTime.parse(autoClosingTimeString, formatter);
+        } catch (DateTimeParseException e) {
+            log.error("RealDataCollector.json 설정 파일에 Settings 객체의 AutoClosingTime 값이 유효하지 않습니다.");
             return false;
         }
 

@@ -55,6 +55,6 @@ public class MainApp {
         }
 
         ShutdownService shutdownService = new ShutdownService();
-        shutdownService.closeProgram();
+        shutdownService.closeProgram(settings.getAutoClosingTime());
     }
 }
