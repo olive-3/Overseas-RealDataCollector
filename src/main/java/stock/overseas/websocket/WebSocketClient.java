@@ -56,7 +56,7 @@ public class WebSocketClient {
         try {
             return new URI(url);
         } catch (URISyntaxException e) {
-            log.error("해외주식 실시간 지연 체결가 URL을 확인해 주세요.");
+            log.error("해외주식 실시간 체결가 URL을 확인해 주세요.");
             throw new RuntimeException();
         }
     }
@@ -66,7 +66,7 @@ public class WebSocketClient {
         try {
             container.connectToServer(this, endpointURI);
         } catch (DeploymentException e) {
-            log.error("해외주식 실시간 지연 체결가 URL을 확인해 주세요.");
+            log.error("해외주식 실시간 체결가 URL을 확인해 주세요.");
             throw new RuntimeException(e);
         } catch (IOException e) {
             log.info("WebSocket 연결 중 문제가 발생했습니다.");
@@ -200,7 +200,7 @@ public class WebSocketClient {
         try {
             sendJson = objectMapper.writeValueAsString(json);
         } catch (JsonProcessingException e) {
-            log.error("해외 주식 실시간 지연 체결가 Subscribe 메세지 생성 중 오류가 발생했습니다.");
+            log.error("해외 주식 실시간 체결가 Subscribe 메세지 생성 중 오류가 발생했습니다.");
             throw new RuntimeException(e);
         }
 

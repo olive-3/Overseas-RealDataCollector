@@ -122,7 +122,7 @@ public class MessageHandler {
             writer.write(",");
             writer.write(stockData[25]);  // 시장구분
         } catch (IOException e) {
-            log.warn("해외 주식 실시간 지연 체결가 파일 작성 중 오류가 발생했습니다.");
+            log.warn("해외 주식 실시간 체결가 파일 작성 중 오류가 발생했습니다.");
         } finally {
             try {
                 if (writer != null) {

@@ -91,7 +91,7 @@ public class DirectoryServiceImpl implements DirectoryService {
         }
 
         if(stocks.isEmpty()) {
-            log.error("해외주식 실시간 지연 체결가를 조회할 주식을 등록해 주세요.");
+            log.error("해외주식 실시간 체결가를 조회할 주식을 등록해 주세요.");
             return false;
         }
 
@@ -226,7 +226,7 @@ public class DirectoryServiceImpl implements DirectoryService {
     /**
      * RealData/ticker/yyyy/ticker_yyMMdd.txt 존재하지 않는 경우, 생성
      * <p>
-     * 해외 주식 실시간지연체결가 로그 파일명은 미국 날짜 기준으로 새성됩니다.
+     * 해외 주식 실시간 체결가 로그 파일명은 미국 날짜 기준으로 생성됩니다.
      */
     @Override
     public void stockRealDataLogFileExists(String ticker) {
@@ -241,12 +241,12 @@ public class DirectoryServiceImpl implements DirectoryService {
                 Files.createDirectories(folderPath);
             }
 
-            //해외 주식 실시간지연체결가 로그.txt 파일 생성
+            //해외 주식 실시간 체결가 로그.txt 파일 생성
             if (!Files.exists(filePath)) {
                 Files.createFile(filePath);
             }
         } catch (IOException e) {
-            log.error("해외 주식 실시간 지연 체결가 로그 파일 폴더 생성 중 오류가 발생했습니다.");
+            log.error("해외 주식 실시간 체결가 로그 파일 폴더 생성 중 오류가 발생했습니다.");
         }
     }
 
