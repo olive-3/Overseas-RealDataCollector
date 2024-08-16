@@ -90,6 +90,11 @@ public class DirectoryServiceImpl implements DirectoryService {
             }
         }
 
+        if(stocks.isEmpty()) {
+            log.error("해외주식 실시간 지연 체결가를 조회할 주식을 등록해 주세요.");
+            return false;
+        }
+
         //설정 조회
         JSONObject settingsObject = (JSONObject) lowerJsonObject.get("settings");
         if (!validateSettings(settingsObject)) {
