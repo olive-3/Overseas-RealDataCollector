@@ -10,6 +10,5 @@ import lombok.Setter;
 public class Stock {
 
     private String symbol;
-    private String stockName;
     private String trKey;
 }

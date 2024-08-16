@@ -84,13 +84,8 @@ public class DirectoryServiceImpl implements DirectoryService {
                     log.error("RealDataCollector.json 설정 파일에 Stocks 객체의 " + stockMarketKey.toUpperCase() + " 객체 배열에 Symbol 키가 존재하지 않거나 값이 존재하지 않습니다.");
                     return false;
                 }
-                String name = (String) stockObject.get("name");
-                if (!StringUtils.hasText(name)) {
-                    log.error("RealDataCollector.json 설정 파일에 Stocks 객체의 " + stockMarketKey.toUpperCase() + " 객체 배열에 Name 키가 존재하지 않거나 값이 존재하지 않습니다.");
-                    return false;
-                }
                 String trKey = "D" + stockMarketMap.get(stockMarketKey) + symbol;
-                Stock stock = new Stock(symbol, name, trKey);
+                Stock stock = new Stock(symbol, trKey);
                 stocks.add(stock);
             }
         }
