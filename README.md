@@ -50,7 +50,8 @@ RealDataCollector.json 설정파일
     - `GrantType` [필수]: 권한 부여 타입으로 "client_credentials"를 입력해 주세요.
     - `AppKey` [필수]: 한국투자증권 홈페이지에서 발급받은 appkey를 입력해 주세요. 보안을 위해 절대 노출되지 않도록 주의해 주세요
     - `SecretKey` [필수]:  한국투자증권 홈페이지에서 발급받은 secretkey를 입력해 주세요. 보안을 위해 절대 노출되지 않도록 주의해 주세요.
-- `Stocks`: 체결가를 조회할 주식 정보를 관리합니다.
+- `Stocks`: 체결가를 조회할 주식 정보를 관리합니다.  
+   `NYSE`(뉴욕), `NASDAQ`(나스닥), `AMEX`(아멕스)  세 가지 주식 시장을 지원합니다. 이 세가지 주식 시장 외의 주식 시장(ex. HKEX, TSE, SSE)은 등록하더라도 조회되지 않습니다. 조회하고 싶은 주식이 있는 시장만 포함시켜 주세요.
     - `Symbol` [필수]: 주식 거래 코드(티커 심볼)를 입력해 주세요. ex) TSLA, SPY
     - `Name`:  `Symbol`에 대한 추가 정보를 제공하는 항목으로, 필수값은 아닙니다. ex) Tesla, SPDR S&P 500 ETF
 - `Settings`: 프로그램의 기타 설정을 관리합니다.
@@ -60,20 +61,6 @@ RealDataCollector.json 설정파일
     - `AutoClosingTime` [필수]: 프로그램 종료를 원하는 시간을 미국 시간 기준으로 HHss 형식으로 입력해 주세요.
         - ex1) 오전 2시 3분의 경우 -> 0203
         - ex2) 오후 6시의 경우 -> 1800
-
-- AMEX에만 주식을 등록하고 NASDAQ, NYSE에는 주식을 등록하지 않는 경우 아래와 같이 키는 남겨두어야 합니다.
-```json
-"Stocks": {
- "AMEX": [
-    {
-      "Symbol": "YINN",
-      "Name": "Direcxion Daily FTSE China Bull 3X Shares"
-    }
-  ],
-  "NASDAQ": [],
-  "NYSE": []
-}
-```
 
 ### 빌드하고 실행하기
 #### MAC
