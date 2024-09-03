@@ -28,22 +28,22 @@ RealDataCollector.json 설정파일
     ],
     "NASDAQ": [
       {
-        "Symbol": "",
-        "Name": ""
+        "Symbol": "[주식 거래 코드를 입력하세요]",
+        "Name": "[주식명을 입력하세요]"
       }
     ],
     "NYSE": [
       {
-        "Symbol": "",
-        "Name": ""
+        "Symbol": "[주식 거래 코드를 입력하세요]",
+        "Name": "[주식명을 입력하세요]"
       }
     ]
   },
   "Settings": {
     "WebsocketAccessKeyUrl": "https://openapi.koreainvestment.com:9443/oauth2/Approval",
     "OverseasStockQuoteUrl": "ws://ops.koreainvestment.com:21000/tryitout/HDFSCNT0",
-    "EnableDebugLog": "",
-    "AutoClosingTime": ""
+    "EnableDebugLog": "false",
+    "AutoClosingTime": "[자동 종료 시간을 입력하세요]"
   }
 ```
 - `Authentication`: 인증 관련 설정을 관리합니다.
